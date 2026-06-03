@@ -577,18 +577,12 @@ function snap() {
 // ============================================================
 // ROBOFLOW — dual model
 // ============================================================
-async function blobToBase64(blob) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result.split(',')[1]);
-    r.onerror = rej;
-    r.readAsDataURL(blob);
-  });
-}
-
-async function fetchOne(b64, project, version, conf) {
+async function fetchOne(blob, project, version, conf) {
   const url = `https://detect.roboflow.com/${project}/${version}?api_key=${RF_API_KEY}&confidence=${conf}&overlap=0.3`;
-  const res = await fetch(url, { method:'POST', body:b64, headers:{'Content-Type':'application/x-www-form-urlencoded'} });
+  // FormData แทน base64 — แก้ปัญหา Failed to fetch บน Android/iOS
+  const fd = new FormData();
+  fd.append('file', blob, 'image.jpg');
+  const res = await fetch(url, { method: 'POST', body: fd });
   if (!res.ok) { const t = await res.text(); throw new Error(`${project} HTTP ${res.status}: ${t}`); }
   return res.json();
 }
@@ -645,12 +639,10 @@ async function callRoboflow(blob, isCamera) {
   const conf = parseInt(document.getElementById('conf-slider').value) / 100;
   if (isCamera) setStatus('กำลังวิเคราะห์ 2 โมเดล...', 'busy');
   try {
-    const b64 = await blobToBase64(blob);
-
-    // ส่ง 2 request พร้อมกัน
+    // ส่ง 2 request พร้อมกัน (FormData — รองรับ Android/iOS)
     const [data1, data2] = await Promise.all([
-      fetchOne(b64, RF_PATH_PROJECT, RF_PATH_VERSION, conf),
-      fetchOne(b64, RF_OBJ_PROJECT,  RF_OBJ_VERSION,  conf)
+      fetchOne(blob, RF_PATH_PROJECT, RF_PATH_VERSION, conf),
+      fetchOne(blob, RF_OBJ_PROJECT,  RF_OBJ_VERSION,  conf)
     ]);
 
     const { paths, obstacles, iw, ih } = mergeResults(data1, data2);
