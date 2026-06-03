@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Path Vision AI</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0f1e; color: #fff; min-height: 100vh; }
+  #header { background: #0d1526; padding: 14px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #1e3050; }
+  #header h1 { font-size: 18px; font-weight: 600; color: #e2f0ff; }
+  .badge { background: #1a3a5c; color: #7eb8f7; font-size: 11px; padding: 3px 10px; border-radius: 20px; margin-left: auto; }
+  #tabs { display: flex; background: #0d1526; border-bottom: 1px solid #1e3050; }
+  .tab { flex: 1; padding: 12px 8px; text-align: center; font-size: 13px; font-weight: 500; color: #4a6a8a; cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab.active { color: #4da6ff; border-bottom-color: #4da6ff; }
+  #panel-camera { display: block; }
+  #panel-upload, #panel-settings { display: none; }
+
+  /* TTS Banner */
+  #tts-banner {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: linear-gradient(135deg, #0d2a0d, #0d1a3a);
+    border: 2px solid #4da6ff; border-radius: 12px;
+    margin: 10px 14px 0; padding: 16px 14px;
+    font-size: 15px; font-weight: 700; color: #fff;
+    cursor: pointer; user-select: none;
+    animation: glow 1.5s ease-in-out infinite alternate;
+  }
+  #tts-banner.hidden { display: none; }
+  @keyframes glow { from { box-shadow: 0 0 8px rgba(77,166,255,0.2); } to { box-shadow: 0 0 22px rgba(77,166,255,0.7); } }
+
+  #view-area { position: relative; background: #000; height: 260px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  #video { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+  #canvas-overlay { position: absolute; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+  #cam-placeholder { text-align: center; z-index: 1; }
+  #cam-placeholder .ph-icon { font-size: 52px; display: block; margin-bottom: 8px; }
+  #cam-placeholder p { font-size: 13px; color: #4a6a8a; }
+
+  /* Direction floating badge */
+  #dir-badge {
+    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+    z-index: 3; display: none;
+    background: rgba(0,0,0,0.75); border-radius: 30px;
+    padding: 7px 18px; font-size: 20px; font-weight: 800;
+    border: 1.5px solid rgba(255,255,255,0.25); white-space: nowrap;
+    letter-spacing: 1px;
+  }
+
+  #status-bar { padding: 10px 14px; display: flex; align-items: center; gap: 8px; background: #0d1526; border-bottom: 1px solid #1e3050; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #334; flex-shrink: 0; }
+  .dot.active { background: #22c55e; animation: pulse 1.5s infinite; }
+  .dot.busy { background: #f59e0b; animation: pulse 0.7s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  #status-text { font-size: 12px; color: #4a8aaa; flex: 1; }
+  #tts-status { font-size: 11px; color: #4a6a8a; }
+  #tts-status.on { color: #22c55e; }
+
+  #result-box { margin: 14px; padding: 16px; border-radius: 14px; background: #0d1526; border: 1px solid #1e3050; min-height: 90px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+  #result-icon { font-size: 34px; }
+  #result-main { font-size: 19px; font-weight: 600; text-align: center; }
+  #result-detail { font-size: 13px; color: #4a8aaa; text-align: center; }
+  #result-dir { font-size: 16px; font-weight: 700; text-align: center; margin-top: 2px; }
+
+  #det-list { margin: 0 14px 14px; }
+  #det-list h3 { font-size: 12px; color: #4a6a8a; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .det-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin-bottom: 6px; border-radius: 10px; background: #0d1526; border: 1px solid #1e3050; }
+  .det-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .det-label { font-size: 13px; font-weight: 500; flex: 1; }
+  .det-zone { font-size: 11px; color: #7eb8f7; background: #0a1628; padding: 2px 7px; border-radius: 6px; }
+  .det-conf { font-size: 12px; color: #4a8aaa; }
+
+  #controls { padding: 0 14px 16px; display: flex; gap: 10px; }
+  #btn-start { flex: 1; background: #1a6fd4; color: #fff; border: none; border-radius: 12px; padding: 15px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  #btn-start.stop { background: #dc2626; }
+  #btn-speak { background: #0d1526; color: #7eb8f7; border: 1px solid #1e3050; border-radius: 12px; padding: 15px 18px; font-size: 20px; cursor: pointer; transition: all 0.2s; }
+  #btn-speak:disabled { opacity: 0.35; }
+  #btn-speak.flash { background: #1a4a1a; border-color: #22c55e; color: #22c55e; }
+
+  #upload-tab { padding: 16px; }
+  #drop-zone { border: 1.5px dashed #1e3050; border-radius: 14px; padding: 32px 16px; text-align: center; cursor: pointer; margin-bottom: 12px; }
+  #drop-zone .dz-icon { font-size: 40px; display: block; margin-bottom: 8px; }
+  #drop-zone p { font-size: 13px; color: #4a8aaa; }
+  #drop-zone p span { color: #4da6ff; }
+  #file-input { display: none; }
+  #canvas-upload { width: 100%; border-radius: 12px; display: none; background: #000; margin-bottom: 12px; }
+  #btn-reset { display: none; background: transparent; color: #4a8aaa; border: 1px solid #1e3050; border-radius: 10px; padding: 8px 14px; font-size: 13px; cursor: pointer; margin-bottom: 10px; }
+  #btn-analyze { width: 100%; background: #1a6fd4; color: #fff; border: none; border-radius: 12px; padding: 15px; font-size: 15px; font-weight: 600; cursor: pointer; display: none; align-items: center; justify-content: center; gap: 8px; }
+  #upload-result { margin-top: 12px; padding: 16px; border-radius: 14px; background: #0d1526; border: 1px solid #1e3050; display: none; text-align: center; }
+  #upload-result-main { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  #upload-result-detail { font-size: 13px; color: #4a8aaa; }
+
+  #settings-tab { padding: 16px; }
+  .srow { display: flex; justify-content: space-between; align-items: center; padding: 13px 0; border-bottom: 1px solid #1e3050; }
+  .slabel { font-size: 14px; color: #4a8aaa; }
+  .sval { font-size: 13px; font-weight: 500; color: #7eb8f7; font-family: monospace; }
+  select { background: #0d1526; color: #e2f0ff; border: 1px solid #1e3050; border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+  input[type=range] { width: 100%; margin: 10px 0 4px; accent-color: #4da6ff; }
+  .range-row { padding: 12px 0; border-bottom: 1px solid #1e3050; }
+  .range-label { font-size: 13px; color: #4a8aaa; display: flex; justify-content: space-between; }
+  #conf-val { color: #4da6ff; font-weight: 600; }
+  .api-info { margin-top: 16px; padding: 12px; border-radius: 10px; background: #0a1628; border: 1px solid #1e3050; }
+  .api-info p { font-size: 11px; color: #4a6a8a; margin-bottom: 4px; }
+  .api-info code { font-size: 11px; color: #7eb8f7; word-break: break-all; }
+  .test-btn { margin-top: 14px; width: 100%; background: #1a3a5c; color: #7eb8f7; border: 1px solid #1e3050; border-radius: 10px; padding: 13px; font-size: 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <span style="font-size:22px">👁️</span>
+  <h1>Path Vision AI</h1>
+  <span class="badge">2 โมเดล</span>
+</div>
+
+<div id="tabs">
+  <div class="tab active" id="tab-camera" onclick="switchTab('camera')">📷 กล้องสด</div>
+  <div class="tab" id="tab-upload" onclick="switchTab('upload')">📤 อัพโหลด</div>
+  <div class="tab" id="tab-settings" onclick="switchTab('settings')">⚙️ ตั้งค่า</div>
+</div>
+
+<!-- CAMERA -->
+<div id="panel-camera">
+  <div id="tts-banner" onclick="bannerTap()">🔊 แตะที่นี่เพื่อเปิดเสียงพูด</div>
+
+  <div id="view-area">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas-overlay"></canvas>
+    <div id="cam-placeholder">
+      <span class="ph-icon">📵</span>
+      <p>กดปุ่มเริ่มเพื่อเปิดกล้อง</p>
+    </div>
+    <div id="dir-badge"></div>
+  </div>
+
+  <div id="status-bar">
+    <div class="dot" id="dot"></div>
+    <span id="status-text">พร้อมใช้งาน</span>
+    <span id="tts-status">🔇 เสียงปิด</span>
+  </div>
+
+  <div id="result-box">
+    <span id="result-icon">👁️</span>
+    <div id="result-main">รอการวิเคราะห์</div>
+    <div id="result-detail">กดเริ่มเพื่อตรวจสอบเส้นทาง</div>
+    <div id="result-dir"></div>
+  </div>
+
+  <div id="det-list" style="display:none">
+    <h3>สิ่งที่ตรวจพบ</h3>
+    <div id="det-items"></div>
+  </div>
+
+  <div id="controls">
+    <button id="btn-start" onclick="toggleCamera()">📷 เริ่มกล้อง</button>
+    <button id="btn-speak" onclick="speakNow()" disabled>🔊</button>
+  </div>
+</div>
+
+<!-- UPLOAD -->
+<div id="panel-upload">
+  <div id="upload-tab">
+    <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <span class="dz-icon">🖼️</span>
+      <p>แตะเพื่อเลือกรูปภาพ<br><span>รองรับ JPG, PNG, HEIC</span></p>
+    </div>
+    <input type="file" id="file-input" accept="image/*" onchange="handleFile(event)">
+    <button id="btn-reset" onclick="resetUpload()">✕ เลือกรูปใหม่</button>
+    <canvas id="canvas-upload"></canvas>
+    <button id="btn-analyze" onclick="analyzeUpload()">🔍 วิเคราะห์รูปภาพ</button>
+    <div id="upload-result">
+      <div id="upload-result-main"></div>
+      <div id="upload-result-detail"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="panel-settings">
+  <div id="settings-tab">
+    <div class="srow"><span class="slabel">API Key</span><span class="sval">n8sq...q9Pj</span></div>
+    <div class="srow"><span class="slabel">โปรเจค 1 (เส้นทาง)</span><span class="sval">glass-jqfh7 v1</span></div>
+    <div class="srow"><span class="slabel">โปรเจค 2 (วัตถุ)</span><span class="sval">object-ae0nd v1</span></div>
+    <div class="range-row">
+      <div class="range-label"><span>ความเชื่อมั่นขั้นต่ำ</span><span id="conf-val">40%</span></div>
+      <input type="range" id="conf-slider" min="10" max="90" value="40" step="5" oninput="document.getElementById('conf-val').textContent=this.value+'%'">
+    </div>
+    <div class="srow">
+      <span class="slabel">ความถี่วิเคราะห์</span>
+      <select id="freq-select">
+        <option value="2000">ทุก 2 วิ</option>
+        <option value="3000" selected>ทุก 3 วิ</option>
+        <option value="5000">ทุก 5 วิ</option>
+      </select>
+    </div>
+    <div class="srow">
+      <span class="slabel">ภาษาเสียง</span>
+      <select id="voice-lang">
+        <option value="th-TH">ภาษาไทย</option>
+        <option value="en-US">English</option>
+      </select>
+    </div>
+    <div class="api-info">
+      <p>Endpoint 1 (เส้นทาง):</p>
+      <code>https://detect.roboflow.com/glass-jqfh7/1</code>
+      <p style="margin-top:8px">Endpoint 2 (วัตถุ):</p>
+      <code>https://detect.roboflow.com/object-ae0nd/1</code>
+    </div>
+    <button class="test-btn" onclick="testVoice()">🔊 ทดสอบเสียง</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG — 2 โปรเจค
+// ============================================================
+const RF_API_KEY  = "n8sqVLyxgG6y4P59q9Pj";
+
+// โปรเจค 1: ตรวจจับเส้นทาง
+const RF_PATH_PROJECT   = "glass-jqfh7";
+const RF_PATH_VERSION   = 1;
+
+// โปรเจค 2: ตรวจจับวัตถุ/สิ่งกีดขวาง
+const RF_OBJ_PROJECT    = "object-ae0nd";
+const RF_OBJ_VERSION    = 1;
+
+let streaming = false, mediaStream = null, timer = null;
+let lastSpeech = "", uploadBlob = null;
+let ttsReady = false;
+let audioCtx = null;
+
+const video = document.getElementById('video');
+const overlay = document.getElementById('canvas-overlay');
+
+// ============================================================
+// TTS — Web Audio unlock + speechSynthesis
+// ============================================================
+
+function getLang() {
+  return (document.getElementById('voice-lang') || {value:'th-TH'}).value;
+}
+
+// Unlock Web Audio (ต้องอยู่ใน user gesture)
+function unlockAudioCtx() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const buf = audioCtx.createBuffer(1, 4096, audioCtx.sampleRate);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf; src.connect(audioCtx.destination); src.start(0);
+  } catch(e) {}
+}
+
+// Unlock speechSynthesis ด้วย utterance สั้น (ต้องอยู่ใน user gesture)
+function unlockSpeech(onDone) {
+  if (!window.speechSynthesis) { ttsReady = true; updateTTSStatus(); if (onDone) onDone(); return; }
+  const u = new SpeechSynthesisUtterance('\u200b');
+  u.volume = 0; u.rate = 2; u.lang = getLang();
+  const finish = () => { ttsReady = true; updateTTSStatus(); if (onDone) onDone(); };
+  u.onend = finish; u.onerror = finish;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+  setTimeout(finish, 1500); // fallback
+}
+
+function bannerTap() {
+  unlockAudioCtx();
+  unlockSpeech(() => {
+    setTimeout(() => rawSpeak('เปิดเสียงพูดแล้ว'), 300);
+  });
+  document.getElementById('tts-banner').classList.add('hidden');
+}
+
+function updateTTSStatus() {
+  const el = document.getElementById('tts-status');
+  if (ttsReady) { el.textContent = '🔊 เสียงเปิด'; el.classList.add('on'); }
+  else { el.textContent = '🔇 เสียงปิด'; el.classList.remove('on'); }
+}
+
+// rawSpeak — พูดโดยตรง ไม่เช็ค ttsReady
+function rawSpeak(text) {
+  if (!text || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const lang = getLang();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang; u.rate = 0.88; u.pitch = 1; u.volume = 1;
+  const voices = window.speechSynthesis.getVoices();
+  const code = lang.split('-')[0];
+  const v = voices.find(x => x.lang === lang) || voices.find(x => x.lang && x.lang.startsWith(code));
+  if (v) u.voice = v;
+  try { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); } catch(e) {}
+  window.speechSynthesis.speak(u);
+  // Android keepalive
+  const ka = setInterval(() => {
+    if (!window.speechSynthesis.speaking) { clearInterval(ka); return; }
+    try { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); } catch(e) {}
+  }, 250);
+  const done = () => clearInterval(ka);
+  u.onend = done; u.onerror = done;
+  setTimeout(done, 25000);
+}
+
+// speak — เรียกจาก auto-detection (ต้อง unlock ก่อน)
+function speak(text) {
+  if (!ttsReady || !text) return;
+  rawSpeak(text);
+}
+
+function speakNow() {
+  const btn = document.getElementById('btn-speak');
+  btn.classList.add('flash'); setTimeout(() => btn.classList.remove('flash'), 500);
+  if (!ttsReady) {
+    unlockAudioCtx();
+    unlockSpeech(() => setTimeout(() => rawSpeak(lastSpeech || 'พร้อมใช้งาน'), 400));
+  } else {
+    rawSpeak(lastSpeech || 'พร้อมใช้งาน');
+  }
+}
+
+function testVoice() {
+  unlockAudioCtx();
+  if (!ttsReady) unlockSpeech(() => setTimeout(() => rawSpeak('ทดสอบเสียง Path Vision AI'), 400));
+  else rawSpeak('ทดสอบเสียง Path Vision AI');
+}
+
+// preload voices
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+// ============================================================
+// ZONE HELPERS
+// ============================================================
+// ภาพแบ่งเป็น 3 โซน: left (0-33%), center (33-67%), right (67-100%)
+function getZone(item) {
+  const cx = item.x / item.iw;
+  if (cx < 0.33) return 'left';
+  if (cx > 0.67) return 'right';
+  return 'center';
+}
+
+function zoneTH(zone) {
+  return zone === 'left' ? 'ซ้าย' : zone === 'right' ? 'ขวา' : 'กลาง';
+}
+
+// หา item ที่ใหญ่สุด (ใกล้ที่สุด)
+function biggest(arr) {
+  return arr.reduce((a, b) => (a.w * a.h > b.w * b.h ? a : b));
+}
+
+// ============================================================
+// NAVIGATION LOGIC
+// ============================================================
+function buildNav(paths, obstacles) {
+  const th = getLang().startsWith('th');
+
+  // ---- ไม่มี detection เลย ----
+  if (paths.length === 0 && obstacles.length === 0) {
+    return {
+      icon: '✅', color: '#22c55e',
+      main: th ? 'เส้นทางโล่ง' : 'Path Clear',
+      detail: th ? 'ไม่พบสิ่งกีดขวาง' : 'No obstacles',
+      dir: '', dirEmoji: '',
+      speech: th ? 'เส้นทางโล่ง เดินต่อได้' : 'Path clear, continue walking'
+    };
+  }
+
+  // ---- มี obstacles แต่ไม่มี path เลย → ทุกอย่างคือสิ่งกีดขวาง ----
+  if (paths.length === 0 && obstacles.length > 0) {
+    const zones = obstacles.map(getZone);
+    const hasL = zones.includes('left');
+    const hasC = zones.includes('center');
+    const hasR = zones.includes('right');
+    let dir, emoji, speech;
+
+    if (hasL && hasC && hasR) {
+      dir = th ? 'หยุด! ทางปิดทุกทิศ' : 'STOP! All blocked';
+      emoji = '🛑';
+      speech = th ? 'หยุด! พบสิ่งกีดขวางทุกทิศทาง ไม่มีทางผ่าน' : 'Stop! Obstacles all around, no clear path';
+    } else if (hasC && hasL) {
+      dir = th ? 'เลี้ยวขวา' : 'Turn Right';
+      emoji = '➡️';
+      speech = th ? 'ระวัง! พบสิ่งกีดขวางทางตรงและซ้าย กรุณาเลี้ยวขวา' : 'Warning! Blocked ahead and left, turn right';
+    } else if (hasC && hasR) {
+      dir = th ? 'เลี้ยวซ้าย' : 'Turn Left';
+      emoji = '⬅️';
+      speech = th ? 'ระวัง! พบสิ่งกีดขวางทางตรงและขวา กรุณาเลี้ยวซ้าย' : 'Warning! Blocked ahead and right, turn left';
+    } else if (hasC) {
+      dir = th ? 'หยุด / เลี้ยวหลีก' : 'Stop / Detour';
+      emoji = '⚠️';
+      speech = th ? 'ระวัง! มีสิ่งกีดขวางตรงหน้า กรุณาเปลี่ยนทิศทาง' : 'Warning! Obstacle ahead, change direction';
+    } else if (hasL && hasR) {
+      dir = th ? 'เดินตรงกลาง' : 'Stay Center';
+      emoji = '⬆️';
+      speech = th ? 'มีสิ่งกีดขวางสองข้าง กรุณาเดินตรงกลาง' : 'Obstacles on both sides, stay in the middle';
+    } else if (hasL) {
+      dir = th ? 'ระวังซ้าย' : 'Watch Left';
+      emoji = '↖️';
+      speech = th ? 'พบสิ่งกีดขวางด้านซ้าย' : 'Obstacle on the left';
+    } else {
+      dir = th ? 'ระวังขวา' : 'Watch Right';
+      emoji = '↗️';
+      speech = th ? 'พบสิ่งกีดขวางด้านขวา' : 'Obstacle on the right';
+    }
+
+    return {
+      icon: '🚧', color: '#ef4444',
+      main: th ? `ไม่พบเส้นทาง — สิ่งกีดขวาง ${obstacles.length} จุด` : `No Path — ${obstacles.length} Obstacle(s)`,
+      detail: obstacles.map(o => o.label).join(', '),
+      dir, dirEmoji: emoji, speech
+    };
+  }
+
+  // ---- มี path ----
+  const bigPath = biggest(paths);
+  const pathZone = getZone(bigPath);
+
+  // ตรวจ obstacle ที่อยู่บน/ใกล้กับ path zone
+  const obsZones = obstacles.map(getZone);
+  const obsOnCenter = obsZones.includes('center');
+  const obsOnLeft = obsZones.includes('left');
+  const obsOnRight = obsZones.includes('right');
+
+  // path อยู่กลาง
+  if (pathZone === 'center') {
+    if (obstacles.length === 0) {
+      return {
+        icon: '✅', color: '#22c55e',
+        main: th ? 'เส้นทางตรงหน้าโล่ง' : 'Clear Path Ahead',
+        detail: paths.map(p => p.label).join(', '),
+        dir: th ? 'เดินตรงได้เลย' : 'Go Straight',
+        dirEmoji: '⬆️',
+        speech: th ? 'เส้นทางตรงหน้าปลอดภัย เดินตรงได้เลย' : 'Path ahead is clear, go straight'
+      };
+    }
+    if (obsOnCenter) {
+      // มีสิ่งกีดขวางตรงกลางด้วย — แนะนำเลี้ยวไปหา path รอง
+      const altLeft = paths.find(p => getZone(p) === 'left');
+      const altRight = paths.find(p => getZone(p) === 'right');
+      let dir, emoji, speech;
+      if (altLeft) {
+        dir = th ? 'เลี้ยวซ้าย' : 'Turn Left'; emoji = '⬅️';
+        speech = th ? 'มีสิ่งกีดขวางบนเส้นทาง กรุณาเลี้ยวซ้าย' : 'Obstacle on path, turn left';
+      } else if (altRight) {
+        dir = th ? 'เลี้ยวขวา' : 'Turn Right'; emoji = '➡️';
+        speech = th ? 'มีสิ่งกีดขวางบนเส้นทาง กรุณาเลี้ยวขวา' : 'Obstacle on path, turn right';
+      } else {
+        dir = th ? 'หยุด! เส้นทางถูกปิดกั้น' : 'STOP! Path Blocked'; emoji = '🛑';
+        speech = th ? 'หยุด! เส้นทางถูกสิ่งกีดขวางปิดกั้น' : 'Stop! Path is blocked';
+      }
+      return {
+        icon: '🚧', color: '#ef4444',
+        main: th ? 'เส้นทางถูกกีดขวาง' : 'Path Blocked',
+        detail: obstacles.map(o => o.label).join(', '),
+        dir, dirEmoji: emoji, speech
+      };
+    }
+    // สิ่งกีดขวางอยู่ข้างๆ ไม่ได้อยู่บน path
+    return {
+      icon: '⚠️', color: '#f59e0b',
+      main: th ? 'เดินตรง ระวังสิ่งกีดขวางข้าง' : 'Go Straight, Watch Sides',
+      detail: obstacles.map(o => o.label).join(', '),
+      dir: th ? 'เดินตรงระวังขอบ' : 'Straight, Watch Sides',
+      dirEmoji: '⬆️',
+      speech: th ? 'เส้นทางตรงหน้าผ่านได้ แต่มีสิ่งกีดขวางด้านข้าง กรุณาระวัง' : 'Path ahead is passable, obstacles on the sides, be careful'
+    };
+  }
+
+  // path อยู่ซ้ายหรือขวา (ไม่ตรงกลาง)
+  if (pathZone === 'left') {
+    const blocked = obstacles.length > 0 && (obsOnCenter || obsOnLeft);
+    return {
+      icon: blocked ? '⚠️' : '✅',
+      color: blocked ? '#f59e0b' : '#22c55e',
+      main: th ? 'เส้นทางอยู่ด้านซ้าย' : 'Path on Left',
+      detail: [...paths, ...obstacles].map(i => i.label).join(', '),
+      dir: th ? 'เลี้ยวซ้ายเข้าเส้นทาง' : 'Turn Left onto Path',
+      dirEmoji: '⬅️',
+      speech: th
+        ? (blocked ? 'เส้นทางอยู่ซ้าย มีสิ่งกีดขวาง กรุณาระวังและเลี้ยวซ้าย' : 'เส้นทางอยู่ด้านซ้าย กรุณาเลี้ยวซ้าย')
+        : (blocked ? 'Path on left with obstacles, carefully turn left' : 'Path is on the left, turn left')
+    };
+  } else { // right
+    const blocked = obstacles.length > 0 && (obsOnCenter || obsOnRight);
+    return {
+      icon: blocked ? '⚠️' : '✅',
+      color: blocked ? '#f59e0b' : '#22c55e',
+      main: th ? 'เส้นทางอยู่ด้านขวา' : 'Path on Right',
+      detail: [...paths, ...obstacles].map(i => i.label).join(', '),
+      dir: th ? 'เลี้ยวขวาเข้าเส้นทาง' : 'Turn Right onto Path',
+      dirEmoji: '➡️',
+      speech: th
+        ? (blocked ? 'เส้นทางอยู่ขวา มีสิ่งกีดขวาง กรุณาระวังและเลี้ยวขวา' : 'เส้นทางอยู่ด้านขวา กรุณาเลี้ยวขวา')
+        : (blocked ? 'Path on right with obstacles, carefully turn right' : 'Path is on the right, turn right')
+    };
+  }
+}
+
+// ============================================================
+// UI
+// ============================================================
+function switchTab(t) {
+  ['camera','upload','settings'].forEach(x => {
+    document.getElementById('panel-'+x).style.display = x===t ? 'block' : 'none';
+    document.getElementById('tab-'+x).classList.toggle('active', x===t);
+  });
+}
+
+function setStatus(txt, state) {
+  document.getElementById('status-text').textContent = txt;
+  const d = document.getElementById('dot');
+  d.className = 'dot';
+  if (state==='active') d.classList.add('active');
+  else if (state==='busy') d.classList.add('busy');
+}
+
+function setResult(nav) {
+  document.getElementById('result-icon').textContent = nav.icon;
+  const m = document.getElementById('result-main');
+  m.textContent = nav.main; m.style.color = nav.color;
+  document.getElementById('result-detail').textContent = nav.detail;
+  const rd = document.getElementById('result-dir');
+  if (nav.dir) { rd.textContent = nav.dirEmoji + ' ' + nav.dir; rd.style.color = nav.color; }
+  else rd.textContent = '';
+  const db = document.getElementById('dir-badge');
+  if (nav.dirEmoji && streaming) {
+    db.textContent = nav.dirEmoji + ' ' + nav.dir;
+    db.style.display = 'block'; db.style.color = nav.color;
+  } else db.style.display = 'none';
+}
+
+// ============================================================
+// CAMERA
+// ============================================================
+async function toggleCamera() { streaming ? stopCamera() : await startCamera(); }
+
+async function startCamera() {
+  if (!ttsReady) document.getElementById('tts-banner').classList.remove('hidden');
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal:'environment' } }, audio: false });
+    video.srcObject = mediaStream; await video.play();
+    document.getElementById('cam-placeholder').style.display = 'none';
+    streaming = true;
+    document.getElementById('btn-start').textContent = '⏹ หยุด';
+    document.getElementById('btn-start').classList.add('stop');
+    document.getElementById('btn-speak').disabled = false;
+    setStatus('กำลังทำงาน', 'active');
+    const freq = parseInt(document.getElementById('freq-select').value);
+    setTimeout(snap, 800);
+    timer = setInterval(snap, freq);
+  } catch(e) {
+    alert('ไม่สามารถเปิดกล้องได้\n\nกรุณาอนุญาต Camera permission ใน browser ก่อนครับ\n\nError: ' + e.message);
+  }
+}
+
+function stopCamera() {
+  clearInterval(timer);
+  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+  mediaStream = null; streaming = false;
+  document.getElementById('btn-start').textContent = '📷 เริ่มกล้อง';
+  document.getElementById('btn-start').classList.remove('stop');
+  document.getElementById('btn-speak').disabled = true;
+  document.getElementById('cam-placeholder').style.display = 'block';
+  document.getElementById('dir-badge').style.display = 'none';
+  overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
+  setStatus('หยุดแล้ว', '');
+}
+
+function snap() {
+  if (!streaming || video.readyState < 2) return;
+  const c = document.createElement('canvas');
+  c.width = video.videoWidth || 640; c.height = video.videoHeight || 480;
+  c.getContext('2d').drawImage(video, 0, 0);
+  c.toBlob(b => { if (b) callRoboflow(b, true); }, 'image/jpeg', 0.82);
+}
+
+// ============================================================
+// ROBOFLOW — dual model
+// ============================================================
+async function blobToBase64(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(blob);
+  });
+}
+
+async function fetchOne(b64, project, version, conf) {
+  const url = `https://detect.roboflow.com/${project}/${version}?api_key=${RF_API_KEY}&confidence=${conf}&overlap=0.3`;
+  const res = await fetch(url, { method:'POST', body:b64, headers:{'Content-Type':'application/x-www-form-urlencoded'} });
+  if (!res.ok) { const t = await res.text(); throw new Error(`${project} HTTP ${res.status}: ${t}`); }
+  return res.json();
+}
+
+// คำนวณ Intersection over Union ของ 2 กล่อง
+function iou(a, b) {
+  const ax1=a.x-a.w/2, ay1=a.y-a.h/2, ax2=a.x+a.w/2, ay2=a.y+a.h/2;
+  const bx1=b.x-b.w/2, by1=b.y-b.h/2, bx2=b.x+b.w/2, by2=b.y+b.h/2;
+  const ix = Math.max(0, Math.min(ax2,bx2)-Math.max(ax1,bx1));
+  const iy = Math.max(0, Math.min(ay2,by2)-Math.max(ay1,by1));
+  const inter = ix*iy;
+  const union = (ax2-ax1)*(ay2-ay1)+(bx2-bx1)*(by2-by1)-inter;
+  return union>0 ? inter/union : 0;
+}
+
+// รวมผลจาก 2 model — path items จากโปรเจค 1, obstacle items จากโปรเจค 2
+// ถ้า path item กับ obstacle item ซ้อนกัน >50% → เก็บ conf สูงกว่า
+function mergeResults(data1, data2) {
+  const iw = data1.image?.width || 640;
+  const ih = data1.image?.height || 480;
+
+  // แปลง prediction เป็น item พร้อม tag ต้นทาง
+  const toItem = (p, src) => ({
+    label: p.class || '?',
+    conf: Math.round((p.confidence||0)*100),
+    x: p.x, y: p.y, w: p.width, h: p.height,
+    iw, ih, _src: src
+  });
+
+  // โปรเจค 1 → ทุก detection ถือว่าเป็น path
+  const pathItems = (data1.predictions||[]).map(p => toItem(p, 'path'));
+
+  // โปรเจค 2 → ทุก detection ถือว่าเป็น obstacle
+  const obsItems  = (data2.predictions||[]).map(p => toItem(p, 'obstacle'));
+
+  // dedup ระหว่าง path กับ obstacle ที่ซ้อนกัน >50% — เก็บอันที่ conf สูงกว่า
+  const finalPaths = [], finalObs = [];
+
+  pathItems.forEach(p => {
+    const conflict = obsItems.find(o => iou(p,o) > 0.5);
+    if (!conflict || p.conf >= conflict.conf) finalPaths.push(p);
+    // ถ้า conflict และ obs มี conf สูงกว่า → path ถูกทับ ไม่เพิ่ม
+  });
+
+  obsItems.forEach(o => {
+    const conflict = pathItems.find(p => iou(o,p) > 0.5);
+    if (!conflict || o.conf > conflict.conf) finalObs.push(o);
+  });
+
+  return { paths: finalPaths, obstacles: finalObs, iw, ih };
+}
+
+async function callRoboflow(blob, isCamera) {
+  const conf = parseInt(document.getElementById('conf-slider').value) / 100;
+  if (isCamera) setStatus('กำลังวิเคราะห์ 2 โมเดล...', 'busy');
+  try {
+    const b64 = await blobToBase64(blob);
+
+    // ส่ง 2 request พร้อมกัน
+    const [data1, data2] = await Promise.all([
+      fetchOne(b64, RF_PATH_PROJECT, RF_PATH_VERSION, conf),
+      fetchOne(b64, RF_OBJ_PROJECT,  RF_OBJ_VERSION,  conf)
+    ]);
+
+    const { paths, obstacles, iw, ih } = mergeResults(data1, data2);
+    handlePredictions(paths, obstacles, iw, ih, isCamera);
+    if (isCamera) setStatus('กำลังทำงาน — 2 โมเดล', 'active');
+  } catch(e) {
+    if (isCamera) setStatus('ข้อผิดพลาด: ' + e.message, '');
+    else showUploadResult('⚠️', 'เชื่อมต่อไม่ได้', e.message, '#ef4444');
+  }
+}
+
+function handlePredictions(paths, obstacles, iw, ih, isCamera) {
+  // ถ้าไม่พบ path เลย → ทุก obstacle คือสิ่งกีดขวาง (ไม่มีทางเดิน)
+  const nav = buildNav(paths, obstacles);
+  const allItems = [
+    ...paths.map(i => ({...i, _isPath:true})),
+    ...obstacles.map(i => ({...i, _isPath:false}))
+  ];
+
+  if (isCamera) {
+    setResult(nav);
+    renderDetections(allItems);
+    drawBoxes(allItems, overlay, video.clientWidth, video.clientHeight);
+    if (nav.speech !== lastSpeech) { lastSpeech = nav.speech; speak(nav.speech); }
+  } else {
+    const detailFull = nav.detail + (nav.dir ? '  ' + nav.dirEmoji + ' ' + nav.dir : '');
+    showUploadResult(nav.icon, nav.main, detailFull, nav.color);
+    const cu = document.getElementById('canvas-upload');
+    drawBoxes(allItems, cu, cu.width, cu.height);
+    rawSpeak(nav.speech);
+  }
+}
+
+// ============================================================
+// DRAW
+// ============================================================
+function drawBoxes(items, canvas, cw, ch) {
+  const ctx = canvas.getContext('2d');
+  if (canvas === overlay) { canvas.width = cw; canvas.height = ch; }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // zone guides (overlay only)
+  if (canvas === overlay && cw > 0) {
+    ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(cw*0.33,0); ctx.lineTo(cw*0.33,ch); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cw*0.67,0); ctx.lineTo(cw*0.67,ch); ctx.stroke();
+    ctx.restore();
+  }
+  items.forEach(item => {
+    const sx = canvas.width/item.iw, sy = canvas.height/item.ih;
+    const x=(item.x-item.w/2)*sx, y=(item.y-item.h/2)*sy, w=item.w*sx, h=item.h*sy;
+    // สีเขียว = เส้นทาง, แดง = สิ่งกีดขวาง
+    const color = item._isPath ? '#22c55e' : '#ef4444';
+    ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.strokeRect(x,y,w,h);
+    const lbl = `${item.label} ${item.conf}%`;
+    ctx.font='bold 12px sans-serif';
+    const tw=ctx.measureText(lbl).width;
+    ctx.fillStyle=color; ctx.fillRect(x,y-20,tw+10,20);
+    ctx.fillStyle='#fff'; ctx.fillText(lbl,x+5,y-6);
+  });
+}
+
+function renderDetections(items) {
+  const list = document.getElementById('det-list');
+  const el = document.getElementById('det-items');
+  if (!items.length) { list.style.display='none'; return; }
+  list.style.display='block';
+  el.innerHTML = items.map(i => {
+    const color = i._isPath ? '#22c55e' : '#ef4444';
+    const tag = i._isPath ? 'เส้นทาง' : 'สิ่งกีดขวาง';
+    const z = getZone(i);
+    const zoneLabel = z==='left' ? 'ซ้าย' : z==='right' ? 'ขวา' : 'กลาง';
+    return `<div class="det-item">
+      <div class="det-dot" style="background:${color}"></div>
+      <span class="det-label">${i.label}</span>
+      <span class="det-zone" style="color:${color}">${tag}</span>
+      <span class="det-zone">${zoneLabel}</span>
+      <span class="det-conf">${i.conf}%</span>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// UPLOAD
+// ============================================================
+function handleFile(e) { const f=e.target.files[0]; if(f) loadImage(f); }
+
+function loadImage(file) {
+  uploadBlob = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.getElementById('canvas-upload');
+      c.width=img.naturalWidth; c.height=img.naturalHeight;
+      c.getContext('2d').drawImage(img,0,0); c.style.display='block';
+      document.getElementById('drop-zone').style.display='none';
+      document.getElementById('btn-reset').style.display='inline-block';
+      document.getElementById('btn-analyze').style.display='flex';
+      document.getElementById('upload-result').style.display='none';
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetUpload() {
+  uploadBlob=null;
+  document.getElementById('canvas-upload').style.display='none';
+  document.getElementById('drop-zone').style.display='block';
+  document.getElementById('btn-reset').style.display='none';
+  document.getElementById('btn-analyze').style.display='none';
+  document.getElementById('upload-result').style.display='none';
+  document.getElementById('file-input').value='';
+}
+
+async function analyzeUpload() {
+  if (!uploadBlob) return;
+  document.getElementById('upload-result').style.display='block';
+  document.getElementById('upload-result-main').textContent='⏳ กำลังวิเคราะห์...';
+  document.getElementById('upload-result-detail').textContent='';
+  await callRoboflow(uploadBlob, false);
+}
+
+function showUploadResult(icon, main, detail, color) {
+  document.getElementById('upload-result').style.display='block';
+  const m=document.getElementById('upload-result-main');
+  m.textContent=icon+' '+main; m.style.color=color;
+  document.getElementById('upload-result-detail').textContent=detail;
+}
+
+// drag & drop
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => e.preventDefault());
+dz.addEventListener('drop', e => { e.preventDefault(); const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) loadImage(f); });
+</script>
+</body>
+</html>
