@@ -7,88 +7,68 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0f1e; color: #fff; min-height: 100vh; }
-
 #header { background: #0d1526; padding: 14px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #1e3050; }
 #header h1 { font-size: 18px; font-weight: 600; color: #e2f0ff; flex: 1; }
-.badge { background: #1a3a5c; color: #7eb8f7; font-size: 10px; padding: 2px 8px; border-radius: 20px; }
-
+.badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; }
+.badge-seg { background: #1a3a5c; color: #7eb8f7; }
+.badge-obj { background: #2a1a3a; color: #c87ef7; }
 #tabs { display: flex; background: #0d1526; border-bottom: 1px solid #1e3050; }
 .tab { flex: 1; padding: 11px 4px; text-align: center; font-size: 12px; font-weight: 500; color: #4a6a8a; cursor: pointer; border-bottom: 2px solid transparent; }
 .tab.active { color: #4da6ff; border-bottom-color: #4da6ff; }
-
 #panel-camera { display: block; }
 #panel-upload, #panel-settings { display: none; }
-
 #tts-banner { display: none; background: #1a3a1a; border: 1px solid #2a6a2a; border-radius: 10px; margin: 10px 12px 0; padding: 11px; font-size: 13px; color: #7dcf7d; text-align: center; cursor: pointer; font-weight: 600; }
-
-#view-area { position: relative; background: #000; height: 250px; overflow: hidden; }
-#video { position: absolute; width: 100%; height: 100%; object-fit: cover; }
-#canvas-overlay { position: absolute; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
-#cam-placeholder { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
+#view-wrap { position: relative; width: 100%; background: #000; }
+#video { width: 100%; display: block; }
+#canvas-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+#cam-placeholder { width: 100%; height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 #cam-placeholder .ph-icon { font-size: 48px; margin-bottom: 8px; }
 #cam-placeholder p { font-size: 13px; color: #4a6a8a; }
-
 #status-bar { padding: 8px 12px; display: flex; align-items: center; gap: 8px; background: #0d1526; border-bottom: 1px solid #1e3050; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: #334; flex-shrink: 0; transition: background 0.3s; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #334; flex-shrink: 0; }
 .dot.active { background: #22c55e; animation: pulse 1.5s infinite; }
 .dot.busy { background: #f59e0b; animation: pulse 0.7s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 #status-text { font-size: 12px; color: #4a8aaa; flex: 1; }
-#model-badges { display: flex; gap: 4px; }
-.mbadge { font-size: 10px; padding: 2px 6px; border-radius: 8px; }
-.mbadge.seg { background: #1a3a5c; color: #7eb8f7; }
-.mbadge.obj { background: #2a1a3a; color: #c87ef7; }
-
 #result-box { margin: 12px; padding: 14px; border-radius: 14px; background: #0d1526; border: 1px solid #1e3050; display: flex; flex-direction: column; align-items: center; gap: 5px; }
 #result-icon { font-size: 34px; }
 #result-main { font-size: 18px; font-weight: 700; text-align: center; }
 #result-detail { font-size: 12px; color: #4a8aaa; text-align: center; }
-
 #det-list { margin: 0 12px 12px; }
 #det-list h3 { font-size: 11px; color: #4a6a8a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 .det-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; margin-bottom: 5px; border-radius: 10px; background: #0d1526; border: 1px solid #1e3050; }
 .det-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .det-label { font-size: 12px; font-weight: 500; flex: 1; }
-.det-source { font-size: 10px; padding: 1px 5px; border-radius: 6px; }
-.det-source.seg { background: #1a3a5c; color: #7eb8f7; }
-.det-source.obj { background: #2a1a3a; color: #c87ef7; }
+.det-src { font-size: 10px; padding: 1px 5px; border-radius: 6px; }
 .det-conf { font-size: 11px; color: #4a8aaa; }
-
 #controls { padding: 0 12px 14px; display: flex; gap: 8px; }
 #btn-start { flex: 1; background: #1a6fd4; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; }
 #btn-start.stop { background: #dc2626; }
 #btn-speak { background: #0d1526; color: #7eb8f7; border: 1px solid #1e3050; border-radius: 12px; padding: 14px 16px; font-size: 18px; cursor: pointer; }
 #btn-speak:disabled { opacity: 0.35; }
-
-/* Upload */
 #upload-tab { padding: 14px; }
 #drop-zone { border: 1.5px dashed #1e3050; border-radius: 14px; padding: 28px 16px; text-align: center; cursor: pointer; margin-bottom: 10px; }
 #drop-zone .dz-icon { font-size: 36px; display: block; margin-bottom: 6px; }
 #drop-zone p { font-size: 13px; color: #4a8aaa; }
 #drop-zone span { color: #4da6ff; }
 #file-input { display: none; }
-#canvas-upload { width: 100%; border-radius: 12px; display: none; background: #000; margin-bottom: 10px; }
+#upload-wrap { position: relative; width: 100%; margin-bottom: 10px; display: none; }
+#canvas-upload { width: 100%; display: block; border-radius: 12px; background: #000; }
 #btn-reset { display: none; background: transparent; color: #4a8aaa; border: 1px solid #1e3050; border-radius: 10px; padding: 7px 12px; font-size: 12px; cursor: pointer; margin-bottom: 8px; }
-#btn-analyze { width: 100%; background: #1a6fd4; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; display: none; }
-#upload-result { margin-top: 10px; padding: 14px; border-radius: 14px; background: #0d1526; border: 1px solid #1e3050; display: none; text-align: center; }
+#btn-analyze { width: 100%; background: #1a6fd4; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; display: none; margin-bottom: 10px; }
+#upload-result { padding: 14px; border-radius: 14px; background: #0d1526; border: 1px solid #1e3050; display: none; text-align: center; }
 #upload-result-main { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
-#upload-result-detail { font-size: 12px; color: #4a8aaa; }
-#upload-det-list { margin-top: 10px; }
+#upload-result-detail { font-size: 12px; color: #4a8aaa; margin-bottom: 8px; }
 .udet { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 4px; border-radius: 8px; background: #0a1220; }
-
-/* Settings */
 #settings-tab { padding: 14px; }
 .srow { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1e3050; }
 .slabel { font-size: 13px; color: #4a8aaa; }
-.sval { font-size: 12px; font-weight: 500; color: #7eb8f7; font-family: monospace; }
+.sval { font-size: 11px; font-weight: 500; color: #7eb8f7; font-family: monospace; }
 select { background: #0d1526; color: #e2f0ff; border: 1px solid #1e3050; border-radius: 8px; padding: 5px 8px; font-size: 12px; }
 input[type=range] { width: 100%; margin: 8px 0 2px; accent-color: #4da6ff; }
 .range-row { padding: 10px 0; border-bottom: 1px solid #1e3050; }
 .range-label { font-size: 12px; color: #4a8aaa; display: flex; justify-content: space-between; }
 #conf-val { color: #4da6ff; font-weight: 600; }
-.info-box { margin-top: 14px; padding: 10px; border-radius: 10px; background: #0a1628; border: 1px solid #1e3050; }
-.info-box p { font-size: 11px; color: #4a6a8a; margin-bottom: 3px; }
-.info-box code { font-size: 10px; color: #7eb8f7; word-break: break-all; display: block; margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -96,8 +76,8 @@ input[type=range] { width: 100%; margin: 8px 0 2px; accent-color: #4da6ff; }
 <div id="header">
   <span style="font-size:22px">👁️</span>
   <h1>Path Vision AI</h1>
-  <span class="badge">Sidewalk</span>
-  <span class="badge" style="background:#2a1a3a;color:#c87ef7;">Object</span>
+  <span class="badge badge-seg">Sidewalk</span>
+  <span class="badge badge-obj">Object</span>
 </div>
 
 <div id="tabs">
@@ -106,10 +86,9 @@ input[type=range] { width: 100%; margin: 8px 0 2px; accent-color: #4da6ff; }
   <div class="tab" id="tab-settings" onclick="switchTab('settings')">⚙️ ตั้งค่า</div>
 </div>
 
-<!-- CAMERA -->
 <div id="panel-camera">
   <div id="tts-banner" onclick="unlockTTS()">🔊 แตะที่นี่เพื่อเปิดเสียงพูด (กดครั้งเดียว)</div>
-  <div id="view-area">
+  <div id="view-wrap">
     <video id="video" autoplay playsinline muted></video>
     <canvas id="canvas-overlay"></canvas>
     <div id="cam-placeholder">
@@ -120,10 +99,8 @@ input[type=range] { width: 100%; margin: 8px 0 2px; accent-color: #4da6ff; }
   <div id="status-bar">
     <div class="dot" id="dot"></div>
     <span id="status-text">พร้อมใช้งาน</span>
-    <div id="model-badges">
-      <span class="mbadge seg">Sidewalk</span>
-      <span class="mbadge obj">Object</span>
-    </div>
+    <span class="badge badge-seg" style="font-size:10px;padding:2px 6px;border-radius:8px;">Sidewalk</span>
+    <span class="badge badge-obj" style="font-size:10px;padding:2px 6px;border-radius:8px;">Object</span>
   </div>
   <div id="result-box">
     <span id="result-icon">👁️</span>
@@ -140,7 +117,6 @@ input[type=range] { width: 100%; margin: 8px 0 2px; accent-color: #4da6ff; }
   </div>
 </div>
 
-<!-- UPLOAD -->
 <div id="panel-upload">
   <div id="upload-tab">
     <div id="drop-zone" onclick="document.getElementById('file-input').click()">
@@ -149,8 +125,8 @@ input[type=range] { width: 100%; margin: 8px 0 2px; accent-color: #4da6ff; }
     </div>
     <input type="file" id="file-input" accept="image/*" onchange="handleFile(event)">
     <button id="btn-reset" onclick="resetUpload()">✕ เลือกรูปใหม่</button>
-    <canvas id="canvas-upload"></canvas>
-    <button id="btn-analyze" onclick="analyzeUpload()">🔍 วิเคราะห์รูปภาพ (2 AI)</button>
+    <div id="upload-wrap"><canvas id="canvas-upload"></canvas></div>
+    <button id="btn-analyze" onclick="analyzeUpload()">🔍 วิเคราะห์ (2 AI)</button>
     <div id="upload-result">
       <div id="upload-result-main"></div>
       <div id="upload-result-detail"></div>
@@ -159,14 +135,13 @@ input[type=range] { width: 100%; margin: 8px 0 2px; accent-color: #4da6ff; }
   </div>
 </div>
 
-<!-- SETTINGS -->
 <div id="panel-settings">
   <div id="settings-tab">
-    <div class="srow"><span class="slabel">Sidewalk Model</span><span class="sval">sidewalk-segmentation v1</span></div>
+    <div class="srow"><span class="slabel">Sidewalk Model</span><span class="sval">sidewalk-segmentation-c60jd v1</span></div>
     <div class="srow"><span class="slabel">Object Model</span><span class="sval">object-ae0nd-ryrkm v1</span></div>
     <div class="range-row">
-      <div class="range-label"><span>ความเชื่อมั่นขั้นต่ำ</span><span id="conf-val">40%</span></div>
-      <input type="range" id="conf-slider" min="10" max="90" value="40" step="5" oninput="document.getElementById('conf-val').textContent=this.value+'%'">
+      <div class="range-label"><span>ความเชื่อมั่นขั้นต่ำ</span><span id="conf-val">25%</span></div>
+      <input type="range" id="conf-slider" min="10" max="80" value="25" step="5" oninput="document.getElementById('conf-val').textContent=this.value+'%'">
     </div>
     <div class="srow">
       <span class="slabel">ความถี่วิเคราะห์</span>
@@ -183,14 +158,6 @@ input[type=range] { width: 100%; margin: 8px 0 2px; accent-color: #4da6ff; }
         <option value="en-US">English</option>
       </select>
     </div>
-    <div class="info-box">
-      <p>Proxy:</p>
-      <code>https://rf-proxy.39058.workers.dev</code>
-      <p>Sidewalk Endpoint:</p>
-      <code>sidewalk-segmentation-c60jd/1</code>
-      <p>Object Endpoint:</p>
-      <code>object-ae0nd-ryrkm/1</code>
-    </div>
   </div>
 </div>
 
@@ -200,12 +167,18 @@ const PROXY     = "https://rf-proxy.39058.workers.dev";
 const SEG_MODEL = "sidewalk-segmentation-c60jd/1";
 const OBJ_MODEL = "object-ae0nd-ryrkm/1";
 
+// Sidewalk model — classes ที่เป็นทางเดินปลอดภัย
+const SAFE_CLASSES = ['roadway','sidewalk','path'];
+
 let streaming = false, mediaStream = null, timer = null;
 let lastMsg = "", uploadBlob = null, ttsUnlocked = false;
 
 const video   = document.getElementById('video');
 const overlay = document.getElementById('canvas-overlay');
-const octx    = overlay.getContext('2d');
+
+function isSafe(cl) {
+  return SAFE_CLASSES.some(s => (cl||'').toLowerCase().includes(s));
+}
 
 // ---- TTS ----
 function unlockTTS() {
@@ -223,32 +196,32 @@ function speak(text) {
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = document.getElementById('voice-lang').value;
-  u.rate = 0.92; u.pitch = 1; u.volume = 1;
+  u.rate = 0.9; u.volume = 1;
   if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-  const voices = window.speechSynthesis.getVoices();
-  const v = voices.find(v => v.lang && v.lang.startsWith(u.lang.split('-')[0]));
+  const lang = u.lang.split('-')[0];
+  const v = window.speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith(lang));
   if (v) u.voice = v;
   window.speechSynthesis.speak(u);
-  setTimeout(() => { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); }, 500);
+  setTimeout(() => { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); }, 600);
 }
 function speakNow() { unlockTTS(); if (lastMsg) speak(lastMsg); }
 
 // ---- UI ----
 function switchTab(t) {
   ['camera','upload','settings'].forEach(x => {
-    document.getElementById('panel-'+x).style.display = x===t ? 'block' : 'none';
+    document.getElementById('panel-'+x).style.display = x===t?'block':'none';
     document.getElementById('tab-'+x).classList.toggle('active', x===t);
   });
 }
 function setStatus(txt, state) {
   document.getElementById('status-text').textContent = txt;
   const d = document.getElementById('dot');
-  d.className = 'dot' + (state === 'active' ? ' active' : state === 'busy' ? ' busy' : '');
+  d.className = 'dot' + (state==='active'?' active':state==='busy'?' busy':'');
 }
 function setResult(icon, main, detail, color) {
   document.getElementById('result-icon').textContent = icon;
   const m = document.getElementById('result-main');
-  m.textContent = main; m.style.color = color || '#e2f0ff';
+  m.textContent = main; m.style.color = color||'#e2f0ff';
   document.getElementById('result-detail').textContent = detail;
 }
 
@@ -258,20 +231,25 @@ async function toggleCamera() { streaming ? stopCamera() : await startCamera(); 
 async function startCamera() {
   checkTTS();
   try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
     video.srcObject = mediaStream;
     await video.play();
+    // ซ่อน placeholder, แสดง video
     document.getElementById('cam-placeholder').style.display = 'none';
+    video.style.display = 'block';
     streaming = true;
     document.getElementById('btn-start').textContent = '⏹ หยุด';
     document.getElementById('btn-start').classList.add('stop');
     document.getElementById('btn-speak').disabled = false;
     setStatus('กำลังทำงาน', 'active');
     const freq = parseInt(document.getElementById('freq-select').value);
-    setTimeout(snap, 1000);
+    setTimeout(snap, 1200);
     timer = setInterval(snap, freq);
   } catch(e) {
-    alert('ไม่สามารถเปิดกล้องได้\nกรุณาอนุญาต Camera permission\nError: ' + e.message);
+    alert('เปิดกล้องไม่ได้\nกรุณาอนุญาต Camera\nError: ' + e.message);
   }
 }
 
@@ -279,24 +257,26 @@ function stopCamera() {
   clearInterval(timer);
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
   mediaStream = null; streaming = false;
+  video.style.display = 'none';
+  document.getElementById('cam-placeholder').style.display = 'flex';
   document.getElementById('btn-start').textContent = '📷 เริ่มกล้อง';
   document.getElementById('btn-start').classList.remove('stop');
   document.getElementById('btn-speak').disabled = true;
-  document.getElementById('cam-placeholder').style.display = 'flex';
-  octx.clearRect(0, 0, overlay.width, overlay.height);
+  const ctx = overlay.getContext('2d');
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
   setStatus('หยุดแล้ว', '');
 }
 
 function snap() {
-  if (!streaming || video.readyState < 2) return;
+  if (!streaming || video.readyState < 2 || !video.videoWidth) return;
   const c = document.createElement('canvas');
-  c.width = video.videoWidth || 640; c.height = video.videoHeight || 480;
+  c.width = video.videoWidth; c.height = video.videoHeight;
   c.getContext('2d').drawImage(video, 0, 0);
-  c.toBlob(b => { if (b) runBothModels(b, true); }, 'image/jpeg', 0.82);
+  c.toBlob(b => { if (b) runBoth(b, true); }, 'image/jpeg', 0.82);
 }
 
-// ---- Roboflow ----
-async function blobToBase64(blob) {
+// ---- API ----
+async function b64(blob) {
   return new Promise((res, rej) => {
     const r = new FileReader();
     r.onload = () => res(r.result.split(',')[1]);
@@ -305,148 +285,165 @@ async function blobToBase64(blob) {
   });
 }
 
-async function callModel(b64, model) {
+async function callModel(base64, model) {
   const conf = parseInt(document.getElementById('conf-slider').value) / 100;
   const res = await fetch(
     `${PROXY}/${model}?api_key=${API_KEY}&confidence=${conf}&overlap=0.3`,
-    { method: 'POST', body: b64, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    { method: 'POST', body: base64, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
   );
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return await res.json();
+  return res.json();
 }
 
-async function runBothModels(blob, isCamera) {
+async function runBoth(blob, isCamera) {
   if (isCamera) setStatus('กำลังวิเคราะห์...', 'busy');
   try {
-    const b64 = await blobToBase64(blob);
-    // รันทั้งสอง model พร้อมกัน
+    const base64 = await b64(blob);
     const [segData, objData] = await Promise.all([
-      callModel(b64, SEG_MODEL),
-      callModel(b64, OBJ_MODEL)
+      callModel(base64, SEG_MODEL),
+      callModel(base64, OBJ_MODEL)
     ]);
-    processResults(segData, objData, isCamera);
+    process(segData, objData, isCamera);
     if (isCamera) setStatus('กำลังทำงาน', 'active');
   } catch(e) {
-    if (isCamera) { setStatus('ข้อผิดพลาด', ''); setResult('⚠️', 'เชื่อมต่อไม่ได้', e.message, '#ef4444'); }
-    else showUploadResult('⚠️', 'เชื่อมต่อไม่ได้', e.message, '#ef4444', []);
+    const msg = '⚠️ เชื่อมต่อไม่ได้: ' + e.message;
+    if (isCamera) { setStatus('ข้อผิดพลาด',''); setResult('⚠️','เชื่อมต่อไม่ได้',e.message,'#ef4444'); }
+    else showUploadResult('⚠️','เชื่อมต่อไม่ได้',e.message,'#ef4444',[]);
   }
 }
 
-function isSafePath(cl) {
-  return /sidewalk|walkway|path|pavement|road|floor|footpath|clear/.test((cl||'').toLowerCase());
-}
-
-function processResults(segData, objData, isCamera) {
-  const segPreds = segData.predictions || [];
-  const objPreds = objData.predictions  || [];
+function process(segData, objData, isCamera) {
   const iw = segData.image?.width  || objData.image?.width  || 640;
   const ih = segData.image?.height || objData.image?.height || 480;
 
   let paths = [], obstacles = [];
 
-  // Sidewalk model — ทางเดิน vs สิ่งอื่น
-  segPreds.forEach(p => {
-    const safe = isSafePath(p.class);
+  // Sidewalk model
+  (segData.predictions || []).forEach(p => {
+    const safe = isSafe(p.class);
     const item = { label: p.class, conf: Math.round((p.confidence||0)*100), safe,
-      x:p.x, y:p.y, w:p.width, h:p.height, points:p.points||null, iw, ih, source:'seg' };
+      x:p.x, y:p.y, w:p.width, h:p.height, pts:p.points||null, iw, ih, src:'seg' };
     safe ? paths.push(item) : obstacles.push(item);
   });
 
-  // Object model — สิ่งกีดขวางทั้งหมด
-  objPreds.forEach(p => {
-    const item = { label: p.class, conf: Math.round((p.confidence||0)*100), safe: false,
-      x:p.x, y:p.y, w:p.width, h:p.height, points:p.points||null, iw, ih, source:'obj' };
-    obstacles.push(item);
+  // Object model — ทุกอย่างเป็นสิ่งกีดขวาง
+  (objData.predictions || []).forEach(p => {
+    obstacles.push({ label: p.class, conf: Math.round((p.confidence||0)*100), safe: false,
+      x:p.x, y:p.y, w:p.width, h:p.height, pts:null, iw, ih, src:'obj' });
   });
 
-  // สรุปผล
+  // สรุป
   let icon, main, detail, color, speech;
   if (obstacles.length > 0) {
-    const names = [...new Set(obstacles.map(o => o.label))].join(', ');
+    const names = [...new Set(obstacles.map(o=>o.label))].join(', ');
     icon='🚧'; main=`พบสิ่งกีดขวาง ${obstacles.length} จุด`; detail=names;
-    color='#ef4444'; speech=`ระวัง! พบสิ่งกีดขวาง ${obstacles.length} รายการ ได้แก่ ${names} กรุณาหยุดหรือเปลี่ยนทิศทาง`;
+    color='#ef4444'; speech=`ระวัง พบสิ่งกีดขวาง ${[...new Set(obstacles.map(o=>o.label))].join(' ')} กรุณาหยุดหรือเปลี่ยนทิศทาง`;
   } else if (paths.length > 0) {
-    const names = [...new Set(paths.map(p => p.label))].join(', ');
+    const names = [...new Set(paths.map(p=>p.label))].join(', ');
     icon='✅'; main='เส้นทางปลอดภัย'; detail=names;
-    color='#22c55e'; speech='พบทางเดิน สามารถเดินต่อไปได้อย่างปลอดภัย';
+    color='#22c55e'; speech='พบทางเดิน สามารถเดินต่อไปได้';
   } else {
     icon='✅'; main='เส้นทางโล่ง'; detail='ไม่พบสิ่งกีดขวาง';
     color='#22c55e'; speech='เส้นทางโล่ง เดินต่อได้';
   }
 
-  const allItems = [...paths, ...obstacles];
+  const all = [...paths, ...obstacles];
 
   if (isCamera) {
     setResult(icon, main, detail, color);
-    renderDetections(allItems);
-    drawOverlay(allItems, overlay, video.clientWidth, video.clientHeight);
+    renderDets(all);
+    drawCanvas(all, isCamera);
     if (speech !== lastMsg) { lastMsg = speech; speak(speech); }
   } else {
-    const cu = document.getElementById('canvas-upload');
-    drawOverlay(allItems, cu, cu.width, cu.height);
-    showUploadResult(icon, main, detail, color, allItems);
+    showUploadResult(icon, main, detail, color, all);
+    drawCanvas(all, isCamera);
     speak(speech);
   }
 }
 
 // ---- Drawing ----
-function drawOverlay(items, canvas, cw, ch) {
-  const ctx = canvas.getContext('2d');
-  if (canvas === overlay) { canvas.width = cw; canvas.height = ch; }
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  items.forEach(item => {
-    const sx = canvas.width / item.iw, sy = canvas.height / item.ih;
-    const color = item.safe ? '#22c55e' : (item.source === 'obj' ? '#c87ef7' : '#ef4444');
-    const fill  = item.safe ? 'rgba(34,197,94,0.18)' : (item.source === 'obj' ? 'rgba(200,126,247,0.22)' : 'rgba(239,68,68,0.22)');
+function drawCanvas(items, isCamera) {
+  let canvas, cw, ch;
+  if (isCamera) {
+    canvas = overlay;
+    // ให้ canvas ตรงกับ video element จริงๆ บนหน้าจอ
+    const rect = video.getBoundingClientRect();
+    cw = rect.width; ch = rect.height;
+    canvas.width  = cw;
+    canvas.height = ch;
+    canvas.style.width  = cw + 'px';
+    canvas.style.height = ch + 'px';
+  } else {
+    canvas = document.getElementById('canvas-upload');
+    cw = canvas.width; ch = canvas.height;
+  }
 
-    if (item.points && item.points.length > 2) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, cw, ch);
+
+  if (!items.length) return;
+
+  // iw/ih คือขนาดภาพจริงที่ model ประมวลผล
+  const iw = items[0].iw, ih = items[0].ih;
+  const sx = cw / iw, sy = ch / ih;
+
+  items.forEach(item => {
+    const color = item.safe ? '#22c55e' : (item.src==='obj' ? '#c87ef7' : '#ef4444');
+    const fill  = item.safe ? 'rgba(34,197,94,0.2)' : (item.src==='obj' ? 'rgba(200,126,247,0.25)' : 'rgba(239,68,68,0.25)');
+
+    if (item.pts && item.pts.length > 2) {
+      // Segmentation polygon
       ctx.beginPath();
-      ctx.moveTo(item.points[0].x*sx, item.points[0].y*sy);
-      for (let i=1; i<item.points.length; i++) ctx.lineTo(item.points[i].x*sx, item.points[i].y*sy);
+      ctx.moveTo(item.pts[0].x*sx, item.pts[0].y*sy);
+      for (let i=1; i<item.pts.length; i++) ctx.lineTo(item.pts[i].x*sx, item.pts[i].y*sy);
       ctx.closePath();
       ctx.fillStyle = fill; ctx.fill();
-      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
-      drawLabel(ctx, item.label, item.conf, item.points[0].x*sx, item.points[0].y*sy, color);
-    } else if (item.x && item.w) {
-      const x=(item.x-item.w/2)*sx, y=(item.y-item.h/2)*sy, w=item.w*sx, h=item.h*sy;
-      ctx.fillStyle = fill; ctx.fillRect(x,y,w,h);
-      ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.strokeRect(x,y,w,h);
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+      drawLabel(ctx, item.label, item.conf, item.pts[0].x*sx, item.pts[0].y*sy, color);
+    } else if (item.x) {
+      // Bounding box
+      const x = (item.x - item.w/2)*sx, y = (item.y - item.h/2)*sy;
+      const w = item.w*sx, h = item.h*sy;
+      ctx.fillStyle = fill; ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.strokeRect(x, y, w, h);
       drawLabel(ctx, item.label, item.conf, x, y, color);
     }
   });
 }
 
 function drawLabel(ctx, label, conf, x, y, color) {
-  const lbl = `${label} ${conf}%`;
-  ctx.font = 'bold 11px sans-serif';
-  const tw = ctx.measureText(lbl).width;
-  const ly = y > 18 ? y-18 : y+18;
-  ctx.fillStyle = color; ctx.fillRect(x, ly, tw+8, 18);
-  ctx.fillStyle = '#fff'; ctx.fillText(lbl, x+4, ly+13);
+  const txt = `${label} ${conf}%`;
+  ctx.font = 'bold 12px sans-serif';
+  const tw = ctx.measureText(txt).width;
+  const ly = y > 20 ? y - 20 : y + 20;
+  ctx.fillStyle = color;
+  ctx.fillRect(x, ly, tw + 8, 18);
+  ctx.fillStyle = '#fff';
+  ctx.fillText(txt, x + 4, ly + 13);
 }
 
-function renderDetections(items) {
+function renderDets(items) {
   const list = document.getElementById('det-list');
-  const el = document.getElementById('det-items');
+  const el   = document.getElementById('det-items');
   if (!items.length) { list.style.display='none'; return; }
-  list.style.display='block';
+  list.style.display = 'block';
   el.innerHTML = items.map(i => {
-    const color = i.safe ? '#22c55e' : (i.source==='obj' ? '#c87ef7' : '#ef4444');
-    const srcClass = i.source==='obj' ? 'obj' : 'seg';
-    const srcLabel = i.source==='obj' ? 'Object' : 'Sidewalk';
+    const color = i.safe ? '#22c55e' : (i.src==='obj' ? '#c87ef7' : '#ef4444');
+    const srcLabel = i.src==='obj' ? 'Object' : 'Sidewalk';
+    const srcCls   = i.src==='obj' ? 'badge-obj' : 'badge-seg';
     return `<div class="det-item">
       <div class="det-dot" style="background:${color}"></div>
       <span class="det-label">${i.label}</span>
-      <span class="det-source ${srcClass}">${srcLabel}</span>
+      <span class="det-src badge ${srcCls}">${srcLabel}</span>
       <span class="det-conf">${i.conf}%</span>
     </div>`;
   }).join('');
 }
 
 // ---- Upload ----
-function handleFile(e) { const f=e.target.files[0]; if(f) loadImage(f); }
+function handleFile(e) { const f=e.target.files[0]; if(f) loadImg(f); }
 
-function loadImage(file) {
+function loadImg(file) {
   uploadBlob = file;
   const reader = new FileReader();
   reader.onload = ev => {
@@ -455,7 +452,7 @@ function loadImage(file) {
       const c = document.getElementById('canvas-upload');
       c.width = img.naturalWidth; c.height = img.naturalHeight;
       c.getContext('2d').drawImage(img, 0, 0);
-      c.style.display = 'block';
+      document.getElementById('upload-wrap').style.display = 'block';
       document.getElementById('drop-zone').style.display = 'none';
       document.getElementById('btn-reset').style.display = 'inline-block';
       document.getElementById('btn-analyze').style.display = 'block';
@@ -468,7 +465,7 @@ function loadImage(file) {
 
 function resetUpload() {
   uploadBlob = null;
-  document.getElementById('canvas-upload').style.display = 'none';
+  document.getElementById('upload-wrap').style.display = 'none';
   document.getElementById('drop-zone').style.display = 'block';
   document.getElementById('btn-reset').style.display = 'none';
   document.getElementById('btn-analyze').style.display = 'none';
@@ -480,10 +477,10 @@ async function analyzeUpload() {
   if (!uploadBlob) return;
   unlockTTS();
   document.getElementById('upload-result').style.display = 'block';
-  document.getElementById('upload-result-main').textContent = '⏳ กำลังวิเคราะห์ด้วย 2 AI...';
+  document.getElementById('upload-result-main').textContent = '⏳ กำลังวิเคราะห์...';
   document.getElementById('upload-result-detail').textContent = '';
   document.getElementById('upload-det-list').innerHTML = '';
-  await runBothModels(uploadBlob, false);
+  await runBoth(uploadBlob, false);
 }
 
 function showUploadResult(icon, main, detail, color, items) {
@@ -492,25 +489,25 @@ function showUploadResult(icon, main, detail, color, items) {
   m.textContent = icon+' '+main; m.style.color = color;
   document.getElementById('upload-result-detail').textContent = detail;
   const dl = document.getElementById('upload-det-list');
-  if (items.length) {
-    dl.innerHTML = items.map(i => {
-      const c = i.safe ? '#22c55e' : (i.source==='obj' ? '#c87ef7' : '#ef4444');
-      const s = i.source==='obj' ? 'Object' : 'Sidewalk';
-      return `<div class="udet">
-        <div class="det-dot" style="background:${c};width:8px;height:8px;border-radius:50%"></div>
-        <span style="font-size:12px;flex:1">${i.label}</span>
-        <span class="det-source ${i.source}" style="font-size:10px;padding:1px 5px;border-radius:6px">${s}</span>
-        <span style="font-size:11px;color:#4a8aaa">${i.conf}%</span>
-      </div>`;
-    }).join('');
-  }
+  dl.innerHTML = items.map(i => {
+    const c = i.safe ? '#22c55e' : (i.src==='obj'?'#c87ef7':'#ef4444');
+    const s = i.src==='obj' ? 'Object' : 'Sidewalk';
+    const sc = i.src==='obj' ? 'badge-obj' : 'badge-seg';
+    return `<div class="udet">
+      <div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0"></div>
+      <span style="font-size:12px;flex:1">${i.label}</span>
+      <span class="badge ${sc}" style="font-size:10px">${s}</span>
+      <span style="font-size:11px;color:#4a8aaa">${i.conf}%</span>
+    </div>`;
+  }).join('');
 }
 
 // drag & drop
 const dz = document.getElementById('drop-zone');
 dz.addEventListener('dragover', e => e.preventDefault());
-dz.addEventListener('drop', e => { e.preventDefault(); const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) loadImage(f); });
+dz.addEventListener('drop', e => { e.preventDefault(); const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) loadImg(f); });
 
+// preload voices
 if (window.speechSynthesis) {
   window.speechSynthesis.getVoices();
   window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
