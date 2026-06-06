@@ -433,16 +433,17 @@ input:checked+.slider-tgl:before{transform:translateX(20px)}
         <input id="key-inp" type="password" placeholder="AQ.Ab8... หรือ AIzaSy..." oninput="onKeyInput(this.value)">
         <button onclick="toggleKeyVis()">👁</button>
       </div>
-      <div class="key-hint">สร้างฟรีที่ <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> → Create API Key<br><span style="color:var(--red)">⚠️ ถ้าขึ้น "denied access" ต้องสร้าง Key ใหม่</span></div>
+      <div class="key-hint">สร้างฟรีที่ <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a> → Get API Key</div>
     </div>
 
     <!-- Model -->
     <div class="srow">
       <span class="slabel">โมเดล AI</span>
       <select id="model-sel" onchange="onModelChange(this.value)">
-        <option value="gemini-3.5-flash">3.5 Flash ⚡ (GA/ฟรี - แนะนำ)</option>
-        <option value="gemini-3.1-flash-lite">3.1 Flash-Lite ⚡ (GA/ฟรี)</option>
-        <option value="gemini-3-flash-preview">3 Flash Preview (ฟรี)</option>
+        <option value="gemini-3.5-flash">3.5 Flash ⚡ (แนะนำ/ฟรี)</option>
+        <option value="gemini-3-flash-preview">3 Flash ⚡ (ฟรี/Preview)</option>
+        <option value="gemini-3.1-flash-lite">3.1 Flash-Lite 🚀 (ฟรี/เร็ว)</option>
+        <option value="gemini-2.5-flash">2.5 Flash ⚡ (ฟรี)</option>
         <option value="gemini-3.1-pro-preview">3.1 Pro 🎯 (จ่ายเงิน)</option>
       </select>
     </div>
@@ -478,14 +479,12 @@ input:checked+.slider-tgl:before{transform:translateX(20px)}
     <!-- Info -->
     <div class="info-card">
       <div class="info-card-title">ℹ️ API Info</div>
-      <p>✅ ฟรี: gemini-3.5-flash · gemini-3.1-flash-lite</p>
-      <p>✅ ฟรี (preview): gemini-3-flash-preview</p>
-      <p style="color:var(--amber)">⚠️ 2.0/2.5 ปิดแล้ว 1 มิ.ย. 2026</p>
-      <p>⏳ 429 → หยุด 30 วิ อัตโนมัติ แล้วรันต่อ</p>
-      <code id="info-endpoint">generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent</code>
+      <p>ฟรี: 3.5 Flash · 3.1 Flash-Lite · 3 Flash Preview</p>
+      <p style="color:var(--amber)">⚠️ Gemini 2.0 ปิดตัวแล้ว 1 มิ.ย. 2026</p>
+      <p>429 → หยุดอัตโนมัติ 30 วิ แล้วรันต่อ</p>
+      <code id="info-endpoint">generativelanguage.googleapis.com/v1/models/gemini-3.5-flash:generateContent</code>
     </div>
 
-    <a href="https://aistudio.google.com/apikey" target="_blank" style="display:block;margin-top:10px;width:100%;background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.08));color:var(--red);border:1.5px solid rgba(239,68,68,0.3);border-radius:12px;padding:13px;font-size:14px;font-weight:700;text-align:center;text-decoration:none">🔑 สร้าง API Key ใหม่ (aistudio.google.com)</a>
     <button class="test-voice-btn" onclick="testVoice()">🔊 ทดสอบเสียงพูด</button>
   </div>
 </div>
@@ -616,11 +615,11 @@ function updateKeyBadge(){
 }
 function onModelChange(val){
   localStorage.setItem('gm',val);
-  const names={'gemini-3.5-flash':'3.5 Flash','gemini-3.1-flash-lite':'3.1 Flash-Lite','gemini-3-flash-preview':'3 Flash','gemini-3.1-pro-preview':'3.1 Pro'};
+  const names={'gemini-3.5-flash':'3.5 Flash','gemini-3-flash-preview':'3 Flash','gemini-3.1-flash-lite':'3.1 Flash-Lite','gemini-2.5-flash':'2.5 Flash','gemini-3.1-pro-preview':'3.1 Pro'};
   const hm=document.getElementById('header-badge');
   if(hm)hm.textContent='Gemini '+(names[val]||val);
   const ep=document.getElementById('info-endpoint');
-  if(ep)ep.textContent='generativelanguage.googleapis.com/v1beta/models/'+val+':generateContent';
+  if(ep)ep.textContent='generativelanguage.googleapis.com/v1/models/'+val+':generateContent';
 }
 function toggleRaw(){
   showRaw=document.getElementById('show-raw').checked;
@@ -737,14 +736,6 @@ async function callGemini(b64,mime){
   }finally{clearTimeout(tid);}
 
   if(res.status===429){rateLimitUntil=Date.now()+30000;throw new Error('rate_limit:30');}
-  if(res.status===403){
-    let msg='API Key ถูกปฏิเสธ (403)';
-    try{const j=await res.json();msg=j?.error?.message||msg;}catch(_){}
-    if(msg.includes('denied access')||msg.includes('project has been denied')){
-      throw new Error('PROJECT_DENIED');
-    }
-    throw new Error(msg.substring(0,100));
-  }
   if(!res.ok){
     let msg=`Gemini error ${res.status}`;
     try{const j=await res.json();msg=j?.error?.message||msg;}catch(_){}
@@ -840,16 +831,6 @@ async function snap(){
     setStatus('กำลังทำงาน','active');
   }catch(e){
     if(e.message==='NO_KEY'){setStatus('❌ กรุณาใส่ API Key ใน ⚙️ ตั้งค่า','');if(streaming)stopCamera();}
-    else if(e.message==='PROJECT_DENIED'){
-      setStatus('❌ Project ถูกบล็อก — สร้าง API Key ใหม่','');
-      if(streaming)stopCamera();
-      // แสดง popup แนะนำ
-      setTimeout(()=>{
-        if(confirm('Google บล็อก Project นี้แล้ว\n\nกด OK เพื่อไปสร้าง API Key ใหม่ที่ aistudio.google.com')){
-          window.open('https://aistudio.google.com/apikey','_blank');
-        }
-      },500);
-    }
     else if(e.message?.startsWith('rate_limit:')){const s=e.message.split(':')[1];setStatus('⏳ Quota เต็ม รอ '+s+' วิ','busy');}
     else setStatus('❌ '+(e.message||'').substring(0,70),'');
   }finally{
@@ -1027,6 +1008,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   const keyInp=document.getElementById('key-inp');
   if(keyInp&&savedKey)keyInp.value=savedKey;
   updateKeyBadge();
+  // model — ล้างโมเดลเก่าที่ไม่รองรับแล้ว
+  const validModels=['gemini-3.5-flash','gemini-3-flash-preview','gemini-3.1-flash-lite','gemini-2.5-flash','gemini-3.1-pro-preview'];
+  const storedModel=localStorage.getItem('gm');
+  if(storedModel && !validModels.includes(storedModel)){localStorage.setItem('gm','gemini-3.5-flash');}
   // model
   const savedModel=getGeminiModel();
   const modelSel=document.getElementById('model-sel');
