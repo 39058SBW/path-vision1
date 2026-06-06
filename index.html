@@ -5,227 +5,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Path Vision AI</title>
 <style>
-  :root {
-    --bg: #080c18;
-    --surface: #0d1428;
-    --border: #1a2540;
-    --accent: #3b82f6;
-    --accent2: #06b6d4;
-    --green: #22c55e;
-    --red: #ef4444;
-    --amber: #f59e0b;
-    --text: #e2eeff;
-    --muted: #4a6a9a;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
-
-  /* Header */
-  #header {
-    background: var(--surface);
-    padding: 14px 16px;
-    display: flex; align-items: center; gap: 10px;
-    border-bottom: 1px solid var(--border);
-    position: relative;
-  }
-  #header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
-  .model-badge {
-    margin-left: auto;
-    background: linear-gradient(135deg, #1a3a5c, #0d2a40);
-    color: var(--accent2);
-    font-size: 11px; font-weight: 600;
-    padding: 4px 10px; border-radius: 20px;
-    border: 1px solid #1a4060;
-    letter-spacing: 0.3px;
-  }
-
-  /* Tabs */
-  #tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
-  .tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
-  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-  /* TTS Banner */
-  #tts-banner {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    margin: 10px 14px 0;
-    padding: 14px 16px;
-    background: linear-gradient(135deg, #0d2a0d, #0d1a3a);
-    border: 1.5px solid var(--accent);
-    border-radius: 12px;
-    font-size: 14px; font-weight: 700; cursor: pointer;
-    animation: glow 2s ease-in-out infinite alternate;
-  }
-  #tts-banner.hidden { display: none; }
-  @keyframes glow {
-    from { box-shadow: 0 0 8px rgba(59,130,246,0.2); }
-    to   { box-shadow: 0 0 20px rgba(59,130,246,0.5); }
-  }
-
-  /* Camera view */
-  #panel-camera { display: block; }
-  #panel-upload, #panel-settings { display: none; }
-
-  #view-area {
-    position: relative; background: #000;
-    height: 270px; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-  }
-  #video { position: absolute; width: 100%; height: 100%; object-fit: cover; }
-  #cam-placeholder { text-align: center; z-index: 1; }
-  #cam-placeholder span { font-size: 48px; display: block; margin-bottom: 8px; }
-  #cam-placeholder p { font-size: 13px; color: var(--muted); }
-
-  /* Direction overlay on camera */
-  #dir-overlay {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    z-index: 3; display: none;
-    background: linear-gradient(transparent, rgba(0,0,0,0.82));
-    padding: 20px 16px 12px;
-    text-align: center;
-  }
-  #dir-overlay .dir-emoji { font-size: 28px; }
-  #dir-overlay .dir-text { font-size: 16px; font-weight: 700; margin-top: 2px; }
-
-  /* Scanning animation */
-  #scan-line {
-    position: absolute; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent2), transparent);
-    z-index: 4; display: none;
-    animation: scanDown 1.5s linear infinite; /* BUG4: ไม่ set top inline */
-  }
-  @keyframes scanDown { from { top: 0; } to { top: 100%; } }
-
-  /* Status bar */
-  #status-bar {
-    padding: 9px 14px;
-    display: flex; align-items: center; gap: 8px;
-    background: var(--surface); border-bottom: 1px solid var(--border);
-  }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: #2a3550; flex-shrink: 0; }
-  .dot.active { background: var(--green); animation: blink 1.5s infinite; }
-  .dot.busy { background: var(--amber); animation: blink 0.6s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-  #status-text { font-size: 12px; color: var(--muted); flex: 1; }
-  #tts-label { font-size: 11px; color: var(--muted); }
-  #tts-label.on { color: var(--green); }
-
-  /* Result box */
-  #result-box {
-    margin: 12px 14px;
-    padding: 18px 16px;
-    border-radius: 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    min-height: 100px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-    transition: border-color 0.3s;
-  }
-  #result-icon { font-size: 32px; line-height: 1; }
-  #result-main { font-size: 20px; font-weight: 700; text-align: center; line-height: 1.2; }
-  #result-detail { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.5; max-width: 280px; }
-  #result-dir {
-    font-size: 15px; font-weight: 700; text-align: center;
-    padding: 6px 14px; border-radius: 20px;
-    background: rgba(255,255,255,0.05);
-    margin-top: 2px;
-  }
-
-  /* Raw Gemini response */
-  #gemini-raw {
-    margin: 0 14px 12px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    font-size: 13px; line-height: 1.6; color: #8aabcc;
-    display: none;
-  }
-  #gemini-raw .raw-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-
-  /* Controls */
-  #controls { padding: 0 14px 16px; display: flex; gap: 10px; }
-  #btn-start {
-    flex: 1; background: var(--accent); color: #fff;
-    border: none; border-radius: 12px; padding: 15px;
-    font-size: 15px; font-weight: 700; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    transition: background 0.2s;
-  }
-  #btn-start.stop { background: var(--red); }
-  #btn-speak {
-    background: var(--surface); color: #7eb8f7;
-    border: 1px solid var(--border); border-radius: 12px;
-    padding: 15px 18px; font-size: 20px; cursor: pointer;
-    transition: all 0.2s;
-  }
-  #btn-speak:disabled { opacity: 0.3; }
-  #btn-speak.flash { background: #1a4a1a; border-color: var(--green); color: var(--green); }
-
-  /* Upload tab */
-  /* ESP32 Panel */
-  #panel-esp32 { display: none; }
-  #esp32-tab { padding: 16px; }
-  .esp-status { display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:12px; background:var(--surface); border:1px solid var(--border); margin-bottom:12px; }
-  .esp-dot { width:10px; height:10px; border-radius:50%; background:#2a3550; flex-shrink:0; }
-  .esp-dot.connected { background:var(--green); animation:blink 2s infinite; }
-  .esp-dot.error { background:var(--red); }
-  .esp-dot.connecting { background:var(--amber); animation:blink 0.5s infinite; }
-  .esp-info { flex:1; font-size:13px; }
-  .esp-info small { color:var(--muted); font-size:11px; }
-  .inp-row { margin-bottom:12px; }
-  .inp-row label { font-size:12px; color:var(--muted); display:block; margin-bottom:6px; }
-  .inp-row input { width:100%; background:#0a1220; color:var(--text); border:1px solid var(--border); border-radius:8px; padding:11px 13px; font-size:14px; font-family:monospace; outline:none; }
-  .inp-row input:focus { border-color:var(--accent); }
-  .esp-btn { width:100%; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:8px; }
-  .esp-btn.primary { background:var(--accent); color:#fff; }
-  .esp-btn.danger { background:var(--red); color:#fff; }
-  .esp-btn.secondary { background:var(--surface); color:#7eb8f7; border:1px solid var(--border); }
-  #esp-preview { width:100%; border-radius:12px; display:none; margin-bottom:12px; background:#000; max-height:220px; object-fit:contain; }
-  .esp-stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
-  .esp-stat { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; text-align:center; }
-  .esp-stat .val { font-size:18px; font-weight:700; color:var(--accent); }
-  .esp-stat .lbl { font-size:10px; color:var(--muted); margin-top:2px; }
-  #upload-tab { padding: 16px; }
-  #drop-zone {
-    border: 1.5px dashed var(--border); border-radius: 14px;
-    padding: 32px 16px; text-align: center; cursor: pointer; margin-bottom: 12px;
-    transition: border-color 0.2s;
-  }
-  #drop-zone:hover { border-color: var(--accent); }
-  #drop-zone .dz-icon { font-size: 38px; display: block; margin-bottom: 8px; }
-  #drop-zone p { font-size: 13px; color: var(--muted); }
-  #drop-zone p span { color: var(--accent); }
-  #file-input { display: none; }
-  #preview-img { width: 100%; border-radius: 12px; display: none; margin-bottom: 12px; max-height: 260px; object-fit: contain; background: #000; }
-  #btn-reset { display: none; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; font-size: 13px; cursor: pointer; margin-bottom: 10px; }
-  #btn-analyze { width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;display:none; } /* CSS-1 */
-  #btn-analyze.show { display:flex;align-items:center;justify-content:center;gap:8px; }
-  #upload-result { margin-top: 12px; padding: 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); display: none; }
-  #upload-result-main { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
-  #upload-result-detail { font-size: 13px; color: var(--muted); line-height: 1.6; }
-
-  /* Settings tab */
-  #settings-tab { padding: 16px; }
-  .srow { display: flex; justify-content: space-between; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--border); }
-  .slabel { font-size: 14px; color: var(--muted); }
-  .sval { font-size: 13px; font-weight: 500; color: #7eb8f7; font-family: monospace; }
-  select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
-  input[type=range] { width: 100%; margin: 10px 0 4px; accent-color: var(--accent); }
-  .range-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
-  .range-label { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
-  #freq-val { color: var(--accent); font-weight: 600; }
-  .info-box { margin-top: 16px; padding: 14px; border-radius: 12px; background: #0a1628; border: 1px solid var(--border); }
-  .info-box p { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-  .info-box code { font-size: 11px; color: #7eb8f7; word-break: break-all; }
-  .info-box .info-title { font-size: 12px; color: var(--accent2); font-weight: 600; margin-bottom: 8px; }
-  .test-btn { margin-top: 14px; width: 100%; background: #1a3a5c; color: #7eb8f7; border: 1px solid var(--border); border-radius: 10px; padding: 13px; font-size: 14px; cursor: pointer; }
-  .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--border); }
-  .toggle { position: relative; width: 44px; height: 24px; }
-  .toggle input { opacity: 0; width: 0; height: 0; }
-  .slider-toggle { position: absolute; inset: 0; background: #2a3550; border-radius: 24px; cursor: pointer; transition: 0.3s; }
-  .slider-toggle:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; }
-  input:checked + .slider-toggle { background: var(--accent); }
-  input:checked + .slider-toggle:before { transform: translateX(20px); }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0f1e; color: #fff; min-height: 100vh; }
+#header { background: #0d1526; padding: 14px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #1e3050; }
+#header h1 { font-size: 18px; font-weight: 600; color: #e2f0ff; flex: 1; }
+.badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: #1a3a5c; color: #7eb8f7; }
+#tabs { display: flex; background: #0d1526; border-bottom: 1px solid #1e3050; }
+.tab { flex: 1; padding: 11px 4px; text-align: center; font-size: 12px; font-weight: 500; color: #4a6a8a; cursor: pointer; border-bottom: 2px solid transparent; }
+.tab.active { color: #4da6ff; border-bottom-color: #4da6ff; }
+#panel-camera { display: block; }
+#panel-upload, #panel-settings { display: none; }
+#tts-banner { display: none; background: #1a3a1a; border: 1px solid #2a6a2a; border-radius: 10px; margin: 10px 12px 0; padding: 11px; font-size: 13px; color: #7dcf7d; text-align: center; cursor: pointer; font-weight: 600; }
+#view-wrap { position: relative; width: 100%; background: #000; min-height: 220px; }
+#video { width: 100%; display: none; }
+#canvas-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+#cam-placeholder { width: 100%; height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#cam-placeholder .ph-icon { font-size: 48px; margin-bottom: 8px; }
+#cam-placeholder p { font-size: 13px; color: #4a6a8a; }
+#status-bar { padding: 8px 12px; display: flex; align-items: center; gap: 8px; background: #0d1526; border-bottom: 1px solid #1e3050; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #334; flex-shrink: 0; }
+.dot.active { background: #22c55e; animation: pulse 1.5s infinite; }
+.dot.busy { background: #f59e0b; animation: pulse 0.7s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+#status-text { font-size: 12px; color: #4a8aaa; flex: 1; }
+#result-box { margin: 12px; padding: 16px; border-radius: 14px; background: #0d1526; border: 1px solid #1e3050; display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 100px; justify-content: center; }
+#result-icon { font-size: 36px; }
+#result-main { font-size: 19px; font-weight: 700; text-align: center; }
+#result-detail { font-size: 13px; color: #4a8aaa; text-align: center; line-height: 1.5; }
+#controls { padding: 0 12px 14px; display: flex; gap: 8px; }
+#btn-start { flex: 1; background: #1a6fd4; color: #fff; border: none; border-radius: 12px; padding: 15px; font-size: 15px; font-weight: 600; cursor: pointer; }
+#btn-start.stop { background: #dc2626; }
+#btn-speak { background: #0d1526; color: #7eb8f7; border: 1px solid #1e3050; border-radius: 12px; padding: 15px 18px; font-size: 20px; cursor: pointer; }
+#btn-speak:disabled { opacity: 0.35; }
+/* Upload */
+#upload-tab { padding: 14px; }
+#drop-zone { border: 1.5px dashed #1e3050; border-radius: 14px; padding: 28px 16px; text-align: center; cursor: pointer; margin-bottom: 10px; }
+#drop-zone .dz-icon { font-size: 36px; display: block; margin-bottom: 6px; }
+#drop-zone p { font-size: 13px; color: #4a8aaa; }
+#drop-zone span { color: #4da6ff; }
+#file-input { display: none; }
+#preview-img { width: 100%; border-radius: 12px; display: none; margin-bottom: 10px; }
+#btn-reset { display: none; background: transparent; color: #4a8aaa; border: 1px solid #1e3050; border-radius: 10px; padding: 7px 12px; font-size: 12px; cursor: pointer; margin-bottom: 8px; }
+#btn-analyze { width: 100%; background: #1a6fd4; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; display: none; margin-bottom: 10px; }
+#upload-result { padding: 16px; border-radius: 14px; background: #0d1526; border: 1px solid #1e3050; display: none; }
+#upload-result-main { font-size: 17px; font-weight: 600; margin-bottom: 6px; text-align: center; }
+#upload-result-detail { font-size: 13px; color: #aaa; line-height: 1.6; }
+/* Settings */
+#settings-tab { padding: 14px; }
+.srow { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1e3050; }
+.slabel { font-size: 13px; color: #4a8aaa; }
+select { background: #0d1526; color: #e2f0ff; border: 1px solid #1e3050; border-radius: 8px; padding: 5px 8px; font-size: 12px; }
+.range-row { padding: 10px 0; border-bottom: 1px solid #1e3050; }
+.range-label { font-size: 12px; color: #4a8aaa; display: flex; justify-content: space-between; margin-bottom: 4px; }
+#freq-val { color: #4da6ff; font-weight: 600; }
+input[type=range] { width: 100%; accent-color: #4da6ff; }
 </style>
 </head>
 <body>
@@ -233,110 +66,38 @@
 <div id="header">
   <span style="font-size:22px">👁️</span>
   <h1>Path Vision AI</h1>
-  <span class="model-badge">Gemini Flash</span>
+  <span class="badge">Gemini AI</span>
 </div>
 
 <div id="tabs">
   <div class="tab active" id="tab-camera" onclick="switchTab('camera')">📷 กล้องสด</div>
   <div class="tab" id="tab-upload" onclick="switchTab('upload')">📤 อัพโหลด</div>
-  <div class="tab" id="tab-esp32" onclick="switchTab('esp32')">📡 ESP32</div>
   <div class="tab" id="tab-settings" onclick="switchTab('settings')">⚙️ ตั้งค่า</div>
 </div>
 
 <!-- CAMERA -->
 <div id="panel-camera">
-  <div id="tts-banner" onclick="bannerTap()">🔊 แตะที่นี่เพื่อเปิดเสียงพูด</div>
-
-  <div id="view-area">
+  <div id="tts-banner" onclick="unlockTTS()">🔊 แตะที่นี่เพื่อเปิดเสียงพูด (กดครั้งเดียว)</div>
+  <div id="view-wrap">
     <video id="video" autoplay playsinline muted></video>
-    <div id="scan-line"></div>
+    <canvas id="canvas-overlay"></canvas>
     <div id="cam-placeholder">
-      <span>📵</span>
+      <span class="ph-icon">📵</span>
       <p>กดปุ่มเริ่มเพื่อเปิดกล้อง</p>
     </div>
-    <div id="dir-overlay">
-      <div class="dir-emoji" id="ov-emoji"></div>
-      <div class="dir-text" id="ov-text"></div>
-    </div>
   </div>
-
   <div id="status-bar">
     <div class="dot" id="dot"></div>
     <span id="status-text">พร้อมใช้งาน</span>
-    <span id="tts-label">🔇 เสียงปิด</span>
   </div>
-
   <div id="result-box">
     <span id="result-icon">👁️</span>
-    <div id="result-main" style="color:var(--text)">รอการวิเคราะห์</div>
+    <div id="result-main">รอการวิเคราะห์</div>
     <div id="result-detail">กดเริ่มเพื่อตรวจสอบเส้นทาง</div>
-    <div id="result-dir"></div>
   </div>
-
-  <div id="gemini-raw">
-    <div class="raw-label">Gemini วิเคราะห์</div>
-    <div id="raw-text"></div>
-  </div>
-
   <div id="controls">
     <button id="btn-start" onclick="toggleCamera()">📷 เริ่มกล้อง</button>
     <button id="btn-speak" onclick="speakNow()" disabled>🔊</button>
-  </div>
-</div>
-
-<!-- ESP32-CAM -->
-<div id="panel-esp32">
-  <div id="esp32-tab">
-
-    <!-- Status -->
-    <div class="esp-status" id="esp-status-bar">
-      <div class="esp-dot" id="esp-dot"></div>
-      <div class="esp-info">
-        <div id="esp-status-text">ยังไม่ได้เชื่อมต่อ</div>
-        <small id="esp-status-sub">กรอก IP แล้วกดเชื่อมต่อ</small>
-      </div>
-      <span id="esp-fps" style="font-size:11px;color:var(--muted)"></span>
-    </div>
-
-    <!-- IP Input -->
-    <div class="inp-row">
-      <label>🌐 IP Address ของ ESP32-CAM</label>
-      <input id="esp-ip" type="text" placeholder="192.168.1.xxx"
-        value="" oninput="saveEspIp(this.value)"
-        style="ime-mode:disabled">
-    </div>
-
-    <!-- Stream URL info -->
-    <div style="font-size:11px;color:var(--muted);background:#0a1220;border-radius:8px;padding:10px 12px;margin-bottom:12px;line-height:1.8">
-      <div>📸 Snapshot: <code id="url-snap" style="color:#7eb8f7">http://[IP]/capture</code></div>
-      <div>🎥 Stream: <code id="url-stream" style="color:#7eb8f7">http://[IP]:81/stream</code></div>
-    </div>
-
-    <!-- Preview -->
-    <img id="esp-preview" alt="ESP32 preview">
-
-    <!-- Stats -->
-    <div class="esp-stat-grid">
-      <div class="esp-stat"><div class="val" id="esp-stat-frames">0</div><div class="lbl">ภาพที่วิเคราะห์</div></div>
-      <div class="esp-stat"><div class="val" id="esp-stat-ms">—</div><div class="lbl">ms/ภาพ</div></div>
-      <div class="esp-stat"><div class="val" id="esp-stat-ok">0</div><div class="lbl">สำเร็จ</div></div>
-      <div class="esp-stat"><div class="val" id="esp-stat-err">0</div><div class="lbl">ผิดพลาด</div></div>
-    </div>
-
-    <!-- Buttons -->
-    <button class="esp-btn primary" onclick="connectESP32()">📡 เชื่อมต่อ ESP32-CAM</button>
-    <button class="esp-btn secondary" onclick="testESP32Snap()">📸 ทดสอบถ่ายภาพ</button>
-    <button class="esp-btn danger" id="esp-stop-btn" onclick="stopESP32()" style="display:none">⏹ หยุด</button>
-
-    <!-- Guide -->
-    <div style="margin-top:14px;padding:12px;border-radius:10px;background:#0a1220;border:1px solid var(--border);font-size:12px;line-height:1.8;color:var(--muted)">
-      <div style="color:var(--accent2);font-weight:600;margin-bottom:6px">📋 วิธีใช้ ESP32-CAM</div>
-      <div>1. Flash ESP32-CAM ด้วย CameraWebServer sketch</div>
-      <div>2. ต่อ WiFi เดียวกับมือถือ</div>
-      <div>3. ดู Serial Monitor หา IP address</div>
-      <div>4. กรอก IP ด้านบน → กดเชื่อมต่อ</div>
-      <div style="margin-top:6px;color:var(--amber)">⚠️ ต้องเปิด HTTP (ไม่ใช่ HTTPS) บน Android: chrome://flags → Allow insecure localhost</div>
-    </div>
   </div>
 </div>
 
@@ -345,7 +106,7 @@
   <div id="upload-tab">
     <div id="drop-zone" onclick="document.getElementById('file-input').click()">
       <span class="dz-icon">🖼️</span>
-      <p>แตะเพื่อเลือกรูปภาพ<br><span>รองรับ JPG, PNG</span><br><small style='color:#4a6a8a;font-size:11px'>HEIC: Gemini อ่านได้ แต่ preview อาจไม่แสดง</small></p>
+      <p>แตะเพื่อเลือกรูปภาพ<br><span>รองรับ JPG, PNG, HEIC</span></p>
     </div>
     <input type="file" id="file-input" accept="image/*" onchange="handleFile(event)">
     <button id="btn-reset" onclick="resetUpload()">✕ เลือกรูปใหม่</button>
@@ -361,28 +122,6 @@
 <!-- SETTINGS -->
 <div id="panel-settings">
   <div id="settings-tab">
-    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">🔑 API Key <span id="key-badge" style="font-size:11px;padding:2px 7px;border-radius:10px;background:#3a1a1a;color:var(--red)">ยังไม่มี</span></div>
-      <div style="display:flex;gap:8px">
-        <input id="key-inp" type="password" placeholder="AIzaSy..."
-          style="flex:1;background:#0a1220;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:monospace;outline:none"
-          oninput="onKeyInput(this.value)">
-        <button onclick="toggleKeyVis()" style="background:#1a2a40;color:#7eb8f7;border:1px solid var(--border);border-radius:8px;padding:9px 13px;cursor:pointer">👁</button>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:6px">สร้างที่ aistudio.google.com → Get API Key (ฟรี)</div>
-    </div>
-    <div class="srow">
-      <span class="slabel">Model</span>
-      <span class="sval">gemini-2.0-flash</span>
-    </div>
-    <div class="range-row">
-      <div class="range-label">
-        <span>ความถี่วิเคราะห์</span>
-        <span id="freq-val">3 วิ</span>
-      </div>
-      <input type="range" id="freq-slider" min="2" max="8" value="3" step="1"
-        oninput="document.getElementById('freq-val').textContent=this.value+' วิ'">
-    </div>
     <div class="srow">
       <span class="slabel">ภาษาเสียง</span>
       <select id="voice-lang">
@@ -390,298 +129,139 @@
         <option value="en-US">English</option>
       </select>
     </div>
-    <div class="toggle-row">
-      <span class="slabel">แสดงคำตอบ Gemini ดิบ</span>
-      <label class="toggle">
-        <input type="checkbox" id="show-raw" onchange="toggleRaw()">
-        <span class="slider-toggle"></span>
-      </label>
+    <div class="range-row">
+      <div class="range-label"><span>ความถี่วิเคราะห์</span><span id="freq-val">4 วิ</span></div>
+      <input type="range" id="freq-slider" min="3" max="10" value="4" step="1"
+        oninput="document.getElementById('freq-val').textContent=this.value+' วิ'">
     </div>
-    <div class="info-box">
-      <div class="info-title">ℹ️ เกี่ยวกับ API</div>
-      <p>ฟรี 1,500 req/วัน (15 req/นาที) · Gemini 2.0 Flash</p>
-      <p>ถ้าเจอ 429 ระบบจะหยุดอัตโนมัติ 30 วิ แล้วรันต่อ</p>
-      <p style="margin-top:6px">Endpoint:</p>
-      <code>generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent</code>
+    <div class="srow">
+      <span class="slabel">โมเดล Gemini</span>
+      <select id="model-select">
+        <option value="gemini-2.5-flash-preview-05-20">gemini-2.5-flash</option>
+        <option value="gemini-2.5-pro-preview-05-06">gemini-2.5-pro</option>
+      </select>
     </div>
-    <button class="test-btn" onclick="testVoice()">🔊 ทดสอบเสียง</button>
   </div>
 </div>
 
 <script>
-// ============================================================
-// CONFIG
-// ============================================================
-// KEY-1+2: ไม่ hardcode key — โหลดจาก localStorage
-function getGeminiKey() { return (localStorage.getItem('gk') || '').trim(); }
-function getGeminiUrl() {
-  return 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + getGeminiKey();
-}
+const GEMINI_KEY = "AQ.Ab8RN6IUP4sh7eslXzI6cqr5rhDGhniIga5Eys2i-CqMjb_HfQ";
 
-// ============================================================
-// PROMPT — บอก Gemini ให้วิเคราะห์ภาพแล้วตอบเป็น JSON
-// ============================================================
-function buildPrompt(lang) {
-  const isThai = lang.startsWith('th');
-  if (isThai) {
-    return `คุณเป็น AI ช่วยนำทางสำหรับผู้พิการทางสายตา วิเคราะห์ภาพนี้แล้วตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่น
+const PROMPT = `คุณเป็น AI ช่วยเหลือผู้พิการทางสายตาในการเดิน
 
-ตอบในรูปแบบนี้เท่านั้น:
+วิเคราะห์ภาพนี้แล้วตอบเป็น JSON เท่านั้น ไม่มีข้อความอื่น ไม่มี markdown:
 {
-  "hasPath": true หรือ false,
-  "pathZone": "left" หรือ "center" หรือ "right" หรือ "none",
-  "obstacles": ["รายการสิ่งกีดขวาง"],
-  "obstacleZones": ["left", "center", หรือ "right" สำหรับแต่ละ obstacle],
-  "direction": "เดินตรง" หรือ "เลี้ยวซ้าย" หรือ "เลี้ยวขวา" หรือ "หยุด" หรือ "ระวังซ้าย" หรือ "ระวังขวา",
-  "dirEmoji": "⬆️" หรือ "⬅️" หรือ "➡️" หรือ "🛑" หรือ "↖️" หรือ "↗️",
-  "safety": "safe" หรือ "warning" หรือ "danger",
-  "speech": "ประโยคภาษาไทยสั้นๆ สำหรับพูดออกเสียง ไม่เกิน 2 ประโยค",
-  "detail": "คำอธิบายสั้นๆ ภาษาไทย"
+  "safe": true หรือ false,
+  "icon": อีโมจิ 1 ตัว,
+  "main": "ข้อความหลัก 1 บรรทัด ภาษาไทย",
+  "detail": "รายละเอียด 1-2 บรรทัด ภาษาไทย",
+  "speech": "ข้อความพูดออกเสียง ภาษาไทย กระชับ"
 }
 
 กฎ:
-- ถ้าไม่เห็นเส้นทางเดินชัดเจน ให้ hasPath=false และถือว่าทุกสิ่งในภาพเป็นสิ่งกีดขวาง
-- pathZone คือตำแหน่งเส้นทางในภาพ: left=ซ้าย center=กลาง right=ขวา
-- speech ต้องเป็นภาษาไทยที่ฟังแล้วเข้าใจง่าย เช่น "เส้นทางตรงหน้าปลอดภัย เดินตรงได้เลย"`;
-  } else {
-    return `You are an AI navigation assistant for visually impaired people. Analyze this image and respond ONLY with JSON, no other text.
+- ถ้าเห็นทางเดิน/พื้น/ถนนโล่งไม่มีสิ่งกีดขวาง → safe: true
+- ถ้าเห็นคน/สัตว์/รถ/สิ่งของ/ขั้นบันได/สิ่งกีดขวางใดๆ → safe: false
+- speech ต้องสั้น ไม่เกิน 2 ประโยค พูดชัดเจน`;
 
-Respond ONLY in this format:
-{
-  "hasPath": true หรือ false,
-  "pathZone": "left" หรือ "center" หรือ "right" หรือ "none",
-  "obstacles": ["list of obstacles"],
-  "obstacleZones": ["left", "center", or "right" for each obstacle],
-  "direction": "go straight" or "turn left" or "turn right" or "stop" or "watch left" or "watch right",
-  "dirEmoji": "⬆️" หรือ "⬅️" หรือ "➡️" หรือ "🛑" หรือ "↖️" หรือ "↗️",
-  "safety": "safe" หรือ "warning" หรือ "danger",
-  "speech": "Short English sentence for text-to-speech, max 2 sentences",
-  "detail": "Brief English description"
-}
-
-Rules:
-- If no clear walkable path is visible, set hasPath=false and treat everything as obstacles
-- pathZone is the path position in image: use "left", "center", or "right"
-- speech must be natural spoken English`;
-  }
-}
-
-// ============================================================
-// STATE
-// ============================================================
 let streaming = false, mediaStream = null, timer = null;
-let lastSpeech = "", lastSpeechTime = 0, uploadFile = null;
-let ttsReady = false, audioCtx = null;
-let showRaw = false;
-let analyzing = false;
-const SPEECH_COOLDOWN_MS = 8000; // N11: พูดซ้ำได้หลัง 8 วิ แม้ speech เหมือนเดิม
-
+let lastMsg = "", uploadFileData = null, ttsUnlocked = false;
 const video = document.getElementById('video');
 
-// ============================================================
-// TTS
-// ============================================================
-function getLang() { return document.getElementById('voice-lang')?.value || 'th-TH'; }
-
-function unlockAudioCtx() {
-  try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const buf = audioCtx.createBuffer(1, 4096, audioCtx.sampleRate);
-    const src = audioCtx.createBufferSource();
-    src.buffer = buf; src.connect(audioCtx.destination); src.start(0);
-  } catch(e) {}
-}
-
-function unlockSpeech(onDone) {
-  if (!window.speechSynthesis) { ttsReady=true; updateTTSStatus(); if(onDone) onDone(); return; }
-  let done = false; // BUG2+11: guard ไม่ให้ finish เรียกซ้ำ
-  const finish = () => {
-    if (done) return; done = true;
-    ttsReady=true; updateTTSStatus();
-    document.getElementById('tts-banner').classList.add('hidden');
-    if(onDone) onDone();
-  };
-  const u = new SpeechSynthesisUtterance('เปิด'); // TTS-1
-  u.volume=0.01; u.rate=2; u.lang=getLang();
-  u.onend=finish; u.onerror=finish;
-  window.speechSynthesis.cancel();
+// ---- TTS ----
+function unlockTTS() {
+  const u = new SpeechSynthesisUtterance(' ');
+  u.volume = 0;
   window.speechSynthesis.speak(u);
-  setTimeout(finish, 1500);
+  ttsUnlocked = true;
+  document.getElementById('tts-banner').style.display = 'none';
 }
-
-function bannerTap() {
-  unlockAudioCtx();
-  unlockSpeech(() => setTimeout(() => rawSpeak('เปิดเสียงพูดแล้ว พร้อมใช้งาน'), 300));
+function checkTTS() {
+  if (!ttsUnlocked) document.getElementById('tts-banner').style.display = 'block';
 }
-
-function updateTTSStatus() {
-  const el = document.getElementById('tts-label');
-  if (ttsReady) { el.textContent='🔊 เสียงเปิด'; el.classList.add('on'); }
-  else { el.textContent='🔇 เสียงปิด'; el.classList.remove('on'); }
-}
-
-let _kaInterval = null; // R3-7: global keepalive ref กัน duplicate interval
-function rawSpeak(text) {
+function speak(text) {
   if (!text || !window.speechSynthesis) return;
-  // R3-7: clear keepalive เก่าก่อน cancel+speak ใหม่
-  if (_kaInterval) { clearInterval(_kaInterval); _kaInterval = null; }
   window.speechSynthesis.cancel();
-  const lang = getLang();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang=lang; u.rate=0.88; u.pitch=1; u.volume=1;
-  const voices = window.speechSynthesis.getVoices();
-  const code = lang.split('-')[0];
-  const v = voices.find(x=>x.lang===lang) || voices.find(x=>x.lang&&x.lang.startsWith(code));
-  if (v) u.voice=v;
-  try { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); } catch(e) {}
+  u.lang = document.getElementById('voice-lang').value;
+  u.rate = 0.9; u.volume = 1;
+  if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+  const lang = u.lang.split('-')[0];
+  const v = window.speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith(lang));
+  if (v) u.voice = v;
   window.speechSynthesis.speak(u);
-  _kaInterval = setInterval(() => {
-    if (!window.speechSynthesis.speaking) { clearInterval(_kaInterval); _kaInterval = null; return; }
-    try { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); } catch(e) {}
-  }, 250);
-  const stopKA = () => { if (_kaInterval) { clearInterval(_kaInterval); _kaInterval = null; } };
-  u.onend = stopKA;
-  u.onerror = stopKA;
-  setTimeout(stopKA, 20000);
+  setTimeout(() => { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); }, 600);
 }
+function speakNow() { unlockTTS(); if (lastMsg) speak(lastMsg); }
 
-function speak(text) { if (ttsReady && text) rawSpeak(text); }
-
-function speakNow() {
-  const btn = document.getElementById('btn-speak');
-  btn.classList.add('flash'); setTimeout(() => btn.classList.remove('flash'), 500);
-  if (!ttsReady) {
-    unlockAudioCtx();
-    unlockSpeech(() => setTimeout(() => rawSpeak(lastSpeech || 'พร้อมใช้งาน'), 400));
-  } else {
-    rawSpeak(lastSpeech || 'พร้อมใช้งาน');
-  }
-}
-
-function testVoice() {
-  unlockAudioCtx();
-  const msg = getLang().startsWith('th') ? 'ทดสอบเสียง Path Vision AI พร้อมใช้งาน' : 'Testing Path Vision AI, ready to use';
-  if (!ttsReady) unlockSpeech(() => setTimeout(() => rawSpeak(msg), 400));
-  else rawSpeak(msg);
-}
-
-if (window.speechSynthesis) {
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-}
-
-// KEY helper functions
-function onKeyInput(val) {
-  localStorage.setItem('gk', val.trim());
-  updateKeyBadge();
-}
-function toggleKeyVis() {
-  const inp = document.getElementById('key-inp');
-  if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
-}
-function updateKeyBadge() {
-  const k = getGeminiKey();
-  const badge = document.getElementById('key-badge');
-  if (!badge) return;
-  if (!k) {
-    badge.textContent = 'ยังไม่มี'; badge.style.background = '#3a1a1a'; badge.style.color = 'var(--red)';
-  } else if (!k.startsWith('AIza')) {
-    badge.textContent = '⚠️ รูปแบบผิด'; badge.style.background = '#3a2a00'; badge.style.color = 'var(--amber)';
-  } else {
-    badge.textContent = '✅ พร้อมใช้'; badge.style.background = '#0a2a0a'; badge.style.color = 'var(--green)';
-  }
-}
-// โหลด key และอัพเดต UI เมื่อเปิดแอพ
-document.addEventListener('DOMContentLoaded', () => {
-  // load saved Gemini key
-  const saved = getGeminiKey();
-  const inp = document.getElementById('key-inp');
-  if (inp && saved) inp.value = saved;
-  updateKeyBadge();
-  // load saved ESP32 IP
-  const savedIp = getEspIp();
-  const inp = document.getElementById('esp-ip');
-  if (inp && savedIp) inp.value = savedIp;
-  updateEspUrls(savedIp);
-}););
-
-// N8: หยุดส่ง request เมื่อ user switch app / minimize
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    // หยุด snap loop ชั่วคราว (ไม่หยุดกล้อง)
-    if (timer) { clearTimeout(timer); timer = null; }
-  } else {
-    // กลับมา — resume ถ้ากล้องยังเปิดอยู่ และยังไม่มี timer ค้าง
-    if (streaming && !timer) {
-      analyzing = false; // R3-6: reset analyzing เผื่อ timeout ค้าง
-      scheduleSnap(1500); // รอ 1.5 วิ ให้กล้องพร้อม
-    }
-  }
-});
-
-// ============================================================
-// UI HELPERS
-// ============================================================
+// ---- UI ----
 function switchTab(t) {
-  ['camera','upload','esp32','settings'].forEach(x => {
-    document.getElementById('panel-'+x).style.display = x===t ? 'block' : 'none';
+  ['camera','upload','settings'].forEach(x => {
+    document.getElementById('panel-'+x).style.display = x===t?'block':'none';
     document.getElementById('tab-'+x).classList.toggle('active', x===t);
   });
 }
-
 function setStatus(txt, state) {
   document.getElementById('status-text').textContent = txt;
   const d = document.getElementById('dot');
-  d.className = 'dot';
-  if (state==='active') d.classList.add('active');
-  else if (state==='busy') d.classList.add('busy');
+  d.className = 'dot'+(state==='active'?' active':state==='busy'?' busy':'');
 }
-
-function toggleRaw() {
-  showRaw = document.getElementById('show-raw').checked;
-  document.getElementById('gemini-raw').style.display = (showRaw && streaming) ? 'block' : 'none';
-}
-
-const COLOR = { safe:'#22c55e', warning:'#f59e0b', danger:'#ef4444' };
-const ICON  = { safe:'✅', warning:'⚠️', danger:'🚧' };
-
-function setResult(parsed) {
-  const color = COLOR[parsed.safety] || '#e2eeff';
-  const icon  = ICON[parsed.safety] || '👁️';
-
+function setResult(icon, main, detail, color) {
   document.getElementById('result-icon').textContent = icon;
   const m = document.getElementById('result-main');
-  m.textContent = parsed.hasPath
-    ? (getLang().startsWith('th') ? 'พบเส้นทาง' : 'Path Found')
-    : (getLang().startsWith('th') ? 'ไม่พบเส้นทาง' : 'No Path');
-  m.style.color = color;
-
-  document.getElementById('result-detail').textContent = parsed.detail || '';
-
-  const rd = document.getElementById('result-dir');
-  if (parsed.dirEmoji && parsed.direction) {
-    rd.textContent = parsed.dirEmoji + ' ' + parsed.direction;
-    rd.style.color = color;
-  } else rd.textContent = '';
-
-  // Direction overlay on camera
-  const ov = document.getElementById('dir-overlay');
-  if (streaming && parsed.dirEmoji) {
-    document.getElementById('ov-emoji').textContent = parsed.dirEmoji;
-    document.getElementById('ov-text').textContent = parsed.direction || '';
-    document.getElementById('ov-text').style.color = color;
-    ov.style.display = 'block';
-  } else ov.style.display = 'none';
-
-  // Result box border
-  document.getElementById('result-box').style.borderColor =
-    parsed.safety==='safe' ? '#1a3a2a' : parsed.safety==='warning' ? '#3a2a0a' : '#3a1a1a';
+  m.textContent = main; m.style.color = color||'#e2f0ff';
+  document.getElementById('result-detail').textContent = detail;
 }
 
-// ============================================================
-// GEMINI API
-// ============================================================
+// ---- Camera ----
+async function toggleCamera() { streaming ? stopCamera() : await startCamera(); }
+
+async function startCamera() {
+  checkTTS();
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } }, audio: false
+    });
+    video.srcObject = mediaStream;
+    await video.play();
+    document.getElementById('cam-placeholder').style.display = 'none';
+    video.style.display = 'block';
+    // ปรับ canvas ให้ตรงกับ video
+    const overlay = document.getElementById('canvas-overlay');
+    overlay.style.display = 'none'; // ไม่ใช้ bounding box กับ gemini
+    streaming = true;
+    document.getElementById('btn-start').textContent = '⏹ หยุด';
+    document.getElementById('btn-start').classList.add('stop');
+    document.getElementById('btn-speak').disabled = false;
+    setStatus('กำลังทำงาน', 'active');
+    const freq = parseInt(document.getElementById('freq-slider').value) * 1000;
+    setTimeout(snap, 1500);
+    timer = setInterval(snap, freq);
+  } catch(e) {
+    alert('เปิดกล้องไม่ได้\nกรุณาอนุญาต Camera\nError: ' + e.message);
+  }
+}
+
+function stopCamera() {
+  clearInterval(timer);
+  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+  mediaStream = null; streaming = false;
+  video.style.display = 'none';
+  document.getElementById('cam-placeholder').style.display = 'flex';
+  document.getElementById('btn-start').textContent = '📷 เริ่มกล้อง';
+  document.getElementById('btn-start').classList.remove('stop');
+  document.getElementById('btn-speak').disabled = true;
+  setStatus('หยุดแล้ว', '');
+}
+
+function snap() {
+  if (!streaming || video.readyState < 2 || !video.videoWidth) return;
+  const c = document.createElement('canvas');
+  c.width = video.videoWidth; c.height = video.videoHeight;
+  c.getContext('2d').drawImage(video, 0, 0);
+  c.toBlob(b => { if (b) analyzeBlob(b, true); }, 'image/jpeg', 0.82);
+}
+
+// ---- Gemini API ----
 async function blobToBase64(blob) {
   return new Promise((res, rej) => {
     const r = new FileReader();
@@ -691,481 +271,116 @@ async function blobToBase64(blob) {
   });
 }
 
-// N1: rate-limit state
-let rateLimitUntil = 0;
-let rateLimitPauseMs = 30000; // pause 30 วิ หลังได้ 429
-
-async function callGemini(imageBase64, mimeType) {
-  // KEY-1: validate key ก่อนส่ง request
-  const _key = getGeminiKey();
-  if (!_key || !_key.startsWith('AIza')) {
-    throw new Error('NO_KEY');
-  }
-
-  // N1: เช็คว่ายังอยู่ใน rate-limit pause อยู่หรือไม่
-  if (Date.now() < rateLimitUntil) {
-    const wait = Math.ceil((rateLimitUntil - Date.now()) / 1000);
-    throw new Error(`rate_limit:${wait}`);
-  }
-
-  const lang = getLang();
-  const prompt = buildPrompt(lang);
-
-  const body = {
-    contents: [{
-      parts: [
-        { text: prompt },
-        { inline_data: { mime_type: mimeType, data: imageBase64 } }
-      ]
-    }],
-    generationConfig: {
-      temperature: 0.1,
-      maxOutputTokens: 512,
-      responseMimeType: "application/json"
-    }
-  };
-
-  // N4+BUG6: AbortController 15s + guard res undefined
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
-  let res;
+async function analyzeBlob(blob, isCamera) {
+  if (isCamera) setStatus('Gemini กำลังวิเคราะห์...', 'busy');
   try {
-    res = await fetch(getGeminiUrl(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: controller.signal
-    });
-  } catch(fetchErr) {
-    // N4: fetch throw (abort/network) — res ยัง undefined ไม่อ่าน res.ok
-    // R3-1: ไม่ต้อง clearTimeout ที่นี่ เพราะ finally จัดการแล้ว
-    if (fetchErr.name === 'AbortError') throw new Error('หมดเวลา (timeout 15 วิ)');
-    throw new Error('เชื่อมต่อไม่ได้: ' + fetchErr.message);
-  } finally {
-    clearTimeout(timeoutId); // R3-1: จัดการ timeout ที่เดียว
-  }
-
-  // N1: จัดการ 429 โดยเฉพาะ
-  if (res.status === 429) {
-    rateLimitUntil = Date.now() + rateLimitPauseMs;
-    throw new Error('rate_limit:30');
-  }
-
-  if (!res.ok) {
-    let errMsg = `Gemini error ${res.status}`;
-    try { const j = await res.json(); errMsg = j?.error?.message || errMsg; } catch(_) {}
-    throw new Error(errMsg); // N2: ไม่แสดง JSON ดิบ
-  }
-
-  const data = await res.json();
-  // N5: เช็ค empty rawText
-  const rawText = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
-  if (!rawText) throw new Error('Gemini ตอบกลับว่างเปล่า (blocked content)');
-  return rawText;
-}
-
-function parseGeminiResponse(raw) {
-  try {
-    // ลบ markdown code block ถ้ามี
-    const clean = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-    return JSON.parse(clean);
+    const b64 = await blobToBase64(blob);
+    const model = document.getElementById('model-select').value;
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: PROMPT },
+              { inline_data: { mime_type: 'image/jpeg', data: b64 } }
+            ]
+          }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 300 }
+        })
+      }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+    // clean JSON
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+    showResult(result, isCamera);
+    if (isCamera) setStatus('กำลังทำงาน', 'active');
   } catch(e) {
-    // fallback: ถ้า parse ไม่ได้
-    return {
-      hasPath: false,
-      pathZone: 'none',
-      obstacles: ['ไม่สามารถวิเคราะห์ได้'],
-      obstacleZones: ['center'],
-      direction: 'หยุด',
-      dirEmoji: '⚠️',
-      safety: 'warning',
-      speech: 'ไม่สามารถวิเคราะห์ภาพได้ กรุณาลองใหม่',
-      detail: 'ไม่สามารถอ่านผลได้ กรุณาลองใหม่' // UI-1
-    };
-  }
-}
-
-// ============================================================
-// CAMERA
-// ============================================================
-async function toggleCamera() { streaming ? stopCamera() : await startCamera(); }
-
-async function startCamera() {
-  if (!ttsReady) document.getElementById('tts-banner').classList.remove('hidden');
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: false
-    });
-    video.srcObject = mediaStream;
-    await video.play();
-    document.getElementById('cam-placeholder').style.display = 'none';
-    streaming = true;
-    document.getElementById('btn-start').textContent = '⏹ หยุด';
-    document.getElementById('btn-start').classList.add('stop');
-    document.getElementById('btn-speak').disabled = false;
-    if (showRaw) document.getElementById('gemini-raw').style.display = 'block';
-    setStatus('กำลังทำงาน', 'active');
-    // BUG3+7: ใช้ setTimeout loop แทน setInterval — อ่าน freq ทุกรอบ + ไม่ queue ซ้อน
-    scheduleSnap(1000);
-  } catch(e) {
-    alert('ไม่สามารถเปิดกล้องได้\n\nกรุณาอนุญาต Camera permission\n\nError: ' + e.message);
-  }
-}
-
-function getFreqMs() { const v = parseInt(document.getElementById('freq-slider')?.value); return (isNaN(v) ? 3 : v) * 1000; } // N9: NaN fallback
-
-function scheduleSnap(delay) {
-  timer = setTimeout(async () => {
-    if (!streaming) return;
-    await snap();
-    if (streaming) scheduleSnap(getFreqMs()); // schedule รอบถัดไปหลัง snap เสร็จ
-  }, (delay != null ? delay : getFreqMs())); // R3-4: delay=0 ไม่ให้ fallback getFreqMs
-}
-
-function stopCamera() {
-  clearTimeout(timer);
-  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-  mediaStream=null; streaming=false; analyzing=false;
-  document.getElementById('btn-start').textContent = '📷 เริ่มกล้อง';
-  document.getElementById('btn-start').classList.remove('stop');
-  document.getElementById('btn-speak').disabled = true;
-  document.getElementById('cam-placeholder').style.display = 'block';
-  document.getElementById('dir-overlay').style.display = 'none';
-  document.getElementById('scan-line').style.display = 'none';
-  document.getElementById('gemini-raw').style.display = 'none';
-  setStatus('หยุดแล้ว', '');
-}
-
-async function snap() {
-  if (!streaming || video.readyState < 2 || analyzing) return;
-  if (!video.videoWidth || !video.videoHeight) return; // CAM-1
-  analyzing = true;
-  setStatus('กำลังวิเคราะห์...', 'busy');
-  document.getElementById('scan-line').style.display = 'block';
-
-  try {
-    const c = document.createElement('canvas');
-    // resize เพื่อลด latency — Gemini รองรับได้ดีแม้ภาพเล็ก
-    const maxW = 800;
-    const ratio = Math.min(maxW / (video.videoWidth||640), 1);
-    c.width = Math.round((video.videoWidth||640) * ratio);
-    c.height = Math.round((video.videoHeight||480) * ratio);
-    c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
-
-    const b64 = await new Promise((res, rej) => {
-      c.toBlob(blob => {
-        if (!blob) { rej(new Error('ไม่สามารถสร้างภาพจากกล้องได้')); return; } // R3-5: null blob guard
-        const r = new FileReader();
-        r.onload = () => res(r.result.split(',')[1]);
-        r.onerror = rej;
-        r.readAsDataURL(blob);
-      }, 'image/jpeg', 0.80);
-    });
-
-    const rawText = await callGemini(b64, 'image/jpeg');
-    const parsed = parseGeminiResponse(rawText);
-
-    if (showRaw) {
-      document.getElementById('raw-text').textContent = rawText;
-    }
-
-    setResult(parsed);
-
-    // N11: time-based cooldown แทน string compare
-    const now = Date.now();
-    const sameMsg = parsed.speech === lastSpeech;
-    const cooledDown = (now - lastSpeechTime) > SPEECH_COOLDOWN_MS;
-    if (parsed.speech && (!sameMsg || cooledDown)) {
-      lastSpeech = parsed.speech;
-      lastSpeechTime = now;
-      speak(parsed.speech);
-    }
-
-    setStatus('กำลังทำงาน', 'active');
-  } catch(e) {
-    // N1: ถ้า rate limit — แสดง countdown ไม่ใช่ error JSON ดิบ
-    if (e.message === 'NO_KEY') {
-      setStatus('❌ กรุณาใส่ API Key ใน ⚙️ ตั้งค่า', '');
-      if (streaming) stopCamera();
-    } else if (e.message && e.message.startsWith('rate_limit:')) {
-      const secs = e.message.split(':')[1];
-      setStatus(`⏳ Quota เต็ม — รอ ${secs} วิ`, 'busy');
+    if (isCamera) {
+      setStatus('ข้อผิดพลาด', '');
+      setResult('⚠️', 'วิเคราะห์ไม่ได้', e.message, '#ef4444');
     } else {
-      // N2: trim error message ให้สั้น ไม่แสดง JSON ดิบ
-      const shortMsg = (e.message || '').substring(0, 80);
-      setStatus('❌ ' + shortMsg, '');
+      document.getElementById('upload-result').style.display = 'block';
+      document.getElementById('upload-result-main').textContent = '⚠️ วิเคราะห์ไม่ได้';
+      document.getElementById('upload-result-main').style.color = '#ef4444';
+      document.getElementById('upload-result-detail').textContent = e.message;
     }
-  } finally {
-    analyzing = false;
-    document.getElementById('scan-line').style.display = 'none';
   }
 }
 
-// ============================================================
-// UPLOAD
-// ============================================================
-let previewURL = null; // BUG5: track URL เพื่อ revoke
-function loadImageFile(f) { // BUG9: แยก logic ออกจาก event
-  uploadFile = f;
-  if (previewURL) { URL.revokeObjectURL(previewURL); previewURL = null; }
-  previewURL = URL.createObjectURL(f);
-  const img = document.getElementById('preview-img');
-  img.src = previewURL; img.style.display = 'block';
-  document.getElementById('drop-zone').style.display = 'none';
-  document.getElementById('btn-reset').style.display = 'inline-block';
-  document.getElementById('btn-analyze').classList.add('show');
-  document.getElementById('upload-result').style.display = 'none';
+function showResult(r, isCamera) {
+  const icon   = r.icon   || '👁️';
+  const main   = r.main   || 'ไม่ทราบ';
+  const detail = r.detail || '';
+  const speech = r.speech || main;
+  const color  = r.safe ? '#22c55e' : '#ef4444';
+
+  if (isCamera) {
+    setResult(icon, main, detail, color);
+    if (speech !== lastMsg) { lastMsg = speech; speak(speech); }
+  } else {
+    document.getElementById('upload-result').style.display = 'block';
+    const m = document.getElementById('upload-result-main');
+    m.textContent = icon + ' ' + main; m.style.color = color;
+    document.getElementById('upload-result-detail').textContent = detail;
+    speak(speech);
+    lastMsg = speech;
+    document.getElementById('btn-speak').disabled = false;
+  }
 }
-function handleFile(e) {
-  const f = e.target.files[0];
-  if (!f) return;
-  loadImageFile(f);
+
+// ---- Upload ----
+function handleFile(e) { const f=e.target.files[0]; if(f) loadImg(f); }
+
+function loadImg(file) {
+  uploadFileData = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = document.getElementById('preview-img');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+    document.getElementById('drop-zone').style.display = 'none';
+    document.getElementById('btn-reset').style.display = 'inline-block';
+    document.getElementById('btn-analyze').style.display = 'block';
+    document.getElementById('upload-result').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
 }
 
 function resetUpload() {
-  uploadFile = null;
-  if (previewURL) { URL.revokeObjectURL(previewURL); previewURL = null; } // BUG5
+  uploadFileData = null;
   document.getElementById('preview-img').style.display = 'none';
   document.getElementById('drop-zone').style.display = 'block';
   document.getElementById('btn-reset').style.display = 'none';
-  document.getElementById('btn-analyze').classList.remove('show'); // BUG8
+  document.getElementById('btn-analyze').style.display = 'none';
   document.getElementById('upload-result').style.display = 'none';
   document.getElementById('file-input').value = '';
 }
 
 async function analyzeUpload() {
-  if (!uploadFile) return;
-  const btn = document.getElementById('btn-analyze');
-  btn.textContent = '⏳ กำลังวิเคราะห์...';
-  btn.disabled = true;
-  const fileSnapshot = uploadFile; // N6: snapshot ไว้ก่อน async
+  if (!uploadFileData) return;
+  unlockTTS();
   document.getElementById('upload-result').style.display = 'block';
-  document.getElementById('upload-result-main').textContent = '⏳ รอผล Gemini...';
+  document.getElementById('upload-result-main').textContent = '⏳ Gemini กำลังวิเคราะห์...';
+  document.getElementById('upload-result-main').style.color = '#e2f0ff';
   document.getElementById('upload-result-detail').textContent = '';
-
-  try {
-    const b64 = await blobToBase64(fileSnapshot); // N6: ใช้ snapshot
-    const mime = fileSnapshot.type || 'image/jpeg';
-    const rawText = await callGemini(b64, mime);
-    const parsed = parseGeminiResponse(rawText);
-
-    const color = COLOR[parsed.safety] || '#e2eeff';
-    const icon = ICON[parsed.safety] || '👁️';
-    const m = document.getElementById('upload-result-main');
-    m.textContent = icon + ' ' + (parsed.hasPath
-      ? (getLang().startsWith('th') ? 'พบเส้นทาง' : 'Path Found')
-      : (getLang().startsWith('th') ? 'ไม่พบเส้นทาง' : 'No Path'));
-    m.style.color = color;
-    document.getElementById('upload-result-detail').innerHTML =
-      `${parsed.dirEmoji || ''} <strong>${parsed.direction || ''}</strong><br>${parsed.detail || ''}`
-      + (parsed.obstacles?.length ? `<br><small style="color:var(--muted)">พบ: ${parsed.obstacles.join(', ')}</small>` : '');
-
-    speak(parsed.speech); // TTS-2
-  } catch(e) {
-    document.getElementById('upload-result-main').textContent = '⚠️ เกิดข้อผิดพลาด';
-    const shortErr = e.message?.startsWith('rate_limit:')
-      ? 'Quota เต็ม กรุณารอแล้วลองใหม่'
-      : (e.message || '').substring(0, 100); // N2: trim
-    document.getElementById('upload-result-detail').textContent = shortErr;
-  } finally {
-    btn.textContent = '🔍 วิเคราะห์ด้วย Gemini';
-    btn.disabled = false;
-  }
+  await analyzeBlob(uploadFileData, false);
 }
 
 // drag & drop
 const dz = document.getElementById('drop-zone');
 dz.addEventListener('dragover', e => e.preventDefault());
-dz.addEventListener('drop', e => {
-  e.preventDefault();
-  const f = e.dataTransfer.files[0];
-  if (f && f.type.startsWith('image/')) { loadImageFile(f); } // BUG9: ไม่ส่ง fake event
-});
+dz.addEventListener('drop', e => { e.preventDefault(); const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) loadImg(f); });
 
-// ============================================================
-// ESP32-CAM
-// ============================================================
-let espStreaming = false, espTimer = null, espAnalyzing = false;
-let espFrames = 0, espOk = 0, espErr = 0;
-
-function saveEspIp(val) {
-  localStorage.setItem('esp_ip', val.trim());
-  updateEspUrls(val.trim());
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
-
-function getEspIp() { return (localStorage.getItem('esp_ip') || '').trim(); }
-
-function updateEspUrls(ip) {
-  const snap   = ip ? `http://${ip}/capture`    : 'http://[IP]/capture';
-  const stream = ip ? `http://${ip}:81/stream`  : 'http://[IP]:81/stream';
-  const s = document.getElementById('url-snap');
-  const t = document.getElementById('url-stream');
-  if (s) s.textContent = snap;
-  if (t) t.textContent = stream;
-}
-
-function setEspStatus(text, sub, state) {
-  const dot  = document.getElementById('esp-dot');
-  const txt  = document.getElementById('esp-status-text');
-  const stxt = document.getElementById('esp-status-sub');
-  if (dot)  { dot.className = 'esp-dot'; if(state) dot.classList.add(state); }
-  if (txt)  txt.textContent = text;
-  if (stxt) stxt.textContent = sub || '';
-}
-
-function updateEspStats() {
-  document.getElementById('esp-stat-frames').textContent = espFrames;
-  document.getElementById('esp-stat-ok').textContent     = espOk;
-  document.getElementById('esp-stat-err').textContent    = espErr;
-}
-
-// ดึงภาพจาก ESP32-CAM /capture endpoint
-async function fetchESP32Frame(ip) {
-  const url = `http://${ip}/capture?t=${Date.now()}`; // cache-bust
-  const controller = new AbortController();
-  const tid = setTimeout(() => controller.abort(), 8000); // timeout 8 วิ
-  try {
-    const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
-    clearTimeout(tid);
-    if (!res.ok) throw new Error(`ESP32 HTTP ${res.status}`);
-    const blob = await res.blob();
-    if (!blob || blob.size < 100) throw new Error('ESP32 ส่งภาพว่าง');
-    return blob;
-  } catch(e) {
-    clearTimeout(tid);
-    if (e.name === 'AbortError') throw new Error('ESP32 timeout');
-    throw e;
-  }
-}
-
-// เชื่อมต่อและเริ่ม loop
-async function connectESP32() {
-  const ip = getEspIp();
-  if (!ip) { alert('กรุณากรอก IP Address ของ ESP32-CAM ก่อนครับ'); return; }
-
-  setEspStatus('กำลังเชื่อมต่อ...', `http://${ip}/capture`, 'connecting');
-
-  try {
-    // ทดสอบดึงภาพก่อน
-    const testBlob = await fetchESP32Frame(ip);
-
-    // แสดง preview
-    const prev = document.getElementById('esp-preview');
-    if (prev) {
-      const url = URL.createObjectURL(testBlob);
-      prev.src = url;
-      prev.style.display = 'block';
-      prev.onload = () => URL.revokeObjectURL(url);
-    }
-
-    espStreaming = true;
-    espFrames = 0; espOk = 0; espErr = 0;
-    document.getElementById('esp-stop-btn').style.display = 'block';
-    setEspStatus('✅ เชื่อมต่อสำเร็จ', `กำลังวิเคราะห์ทุก ${getFreqMs()/1000} วิ`, 'connected');
-    updateEspStats();
-    scheduleEspSnap(500);
-  } catch(e) {
-    setEspStatus('❌ เชื่อมต่อไม่ได้', e.message, 'error');
-  }
-}
-
-function stopESP32() {
-  espStreaming = false;
-  if (espTimer) { clearTimeout(espTimer); espTimer = null; }
-  espAnalyzing = false;
-  document.getElementById('esp-stop-btn').style.display = 'none';
-  document.getElementById('esp-fps').textContent = '';
-  setEspStatus('หยุดแล้ว', '', '');
-}
-
-function scheduleEspSnap(delay) {
-  espTimer = setTimeout(async () => {
-    if (!espStreaming) return;
-    await snapESP32();
-    if (espStreaming) scheduleEspSnap(getFreqMs());
-  }, delay != null ? delay : getFreqMs());
-}
-
-async function snapESP32() {
-  if (!espStreaming || espAnalyzing) return;
-  const ip = getEspIp();
-  if (!ip) { stopESP32(); return; }
-
-  espAnalyzing = true;
-  const t0 = Date.now();
-
-  try {
-    const blob = await fetchESP32Frame(ip);
-
-    // อัพเดต preview
-    const prev = document.getElementById('esp-preview');
-    if (prev) {
-      const oldSrc = prev.src;
-      const newUrl = URL.createObjectURL(blob);
-      prev.src = newUrl;
-      prev.onload = () => {
-        URL.revokeObjectURL(newUrl);
-        if (oldSrc && oldSrc.startsWith('blob:')) URL.revokeObjectURL(oldSrc);
-      };
-      prev.style.display = 'block';
-    }
-
-    // ส่ง Gemini
-    const b64 = await blobToBase64(blob);
-    const rawText = await callGemini(b64, 'image/jpeg');
-    const parsed = parseGeminiResponse(rawText);
-
-    espFrames++; espOk++;
-    const ms = Date.now() - t0;
-    document.getElementById('esp-stat-ms').textContent = ms;
-    document.getElementById('esp-fps').textContent = `${ms}ms`;
-    updateEspStats();
-    setEspStatus('✅ กำลังทำงาน', parsed.direction || '', 'connected');
-
-    // แสดงผลและพูด (ใช้ result-box เดียวกับกล้อง)
-    setResult(parsed);
-    const now = Date.now();
-    if (parsed.speech && (parsed.speech !== lastSpeech || (now - lastSpeechTime) > SPEECH_COOLDOWN_MS)) {
-      lastSpeech = parsed.speech;
-      lastSpeechTime = now;
-      speak(parsed.speech);
-    }
-
-  } catch(e) {
-    espFrames++; espErr++;
-    updateEspStats();
-    const shortErr = e.message?.startsWith('rate_limit:')
-      ? 'Quota เต็ม — รอแล้วลอง'
-      : (e.message || '').substring(0, 60);
-    setEspStatus('⚠️ ' + shortErr, '', 'error');
-  } finally {
-    espAnalyzing = false;
-  }
-}
-
-// ทดสอบถ่ายภาพเดี่ยว (ไม่ loop)
-async function testESP32Snap() {
-  const ip = getEspIp();
-  if (!ip) { alert('กรุณากรอก IP ก่อนครับ'); return; }
-  setEspStatus('กำลังถ่ายภาพทดสอบ...', '', 'connecting');
-  try {
-    const blob = await fetchESP32Frame(ip);
-    const prev = document.getElementById('esp-preview');
-    if (prev) {
-      const url = URL.createObjectURL(blob);
-      prev.src = url; prev.style.display = 'block';
-      prev.onload = () => URL.revokeObjectURL(url);
-    }
-    setEspStatus('✅ ถ่ายภาพได้ — พร้อมเชื่อมต่อ', `ขนาด ${(blob.size/1024).toFixed(1)} KB`, 'connected');
-  } catch(e) {
-    setEspStatus('❌ ' + e.message.substring(0,60), 'ตรวจสอบ IP และ WiFi', 'error');
-  }
-}
-
-// โหลด IP ที่บันทึกไว้
-);
-
 </script>
 </body>
 </html>
